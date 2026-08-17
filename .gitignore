@@ -1,0 +1,28 @@
+# Build files
+build/
+bin/
+obj/
+Debug/
+Release/
+
+# Executable files
+*.exe
+*.out
+*.o
+*.obj
+
+# IDE
+.vscode/
+.idea/
+
+# Qt generated files
+*.user
+*.user.*
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+Makefile
+
+# Temporary files
+*.tmp
+*.log
