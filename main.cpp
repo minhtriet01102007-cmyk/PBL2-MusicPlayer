@@ -1,5 +1,6 @@
 #include "include/song.h"
 #include "include/artist.h"
+#include "include/album.h"
 #include <iostream>
 
 int main(){
@@ -11,5 +12,7 @@ int main(){
     std::cout << "=================================" << "\n";
     Artist artist("A001", "Dangrangto", "Viet Nam", "Ballad");
     artist.show();
+    std::cout << "=================================" << std::endl;
+    Album album("B001", "Mini-EP", "Dangrangto", "2026-02-28", "Ballad");
     return 0;
 }
