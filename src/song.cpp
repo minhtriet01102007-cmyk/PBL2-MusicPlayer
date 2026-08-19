@@ -1,13 +1,13 @@
 #include "../include/Song.h"
 #include <iostream>
 
-Song::Song() : id_song(""), name(""), artist(""), album(""), type_song(""), 
+Song::Song() : id_song(""), name(""), artist(""), album(""), type(""), 
                duration(0), date_release(""), count_playsong(0)
 {}
 Song::Song(std::string id_song, std::string name, std::string artist, std::string album,
-           std::string type_song, int duration, std::string date_release, int count_playsong)
+           std::string type, int duration, std::string date_release, int count_playsong)
     : id_song(id_song), name(name), artist(artist), album(album),
-      type_song(type_song), duration(duration),
+      type(type), duration(duration),
       date_release(date_release), count_playsong(count_playsong)
 {}
 std::string Song::getIdsong() const{
@@ -24,7 +24,7 @@ std::string Song::getAlbum() const{
     return album;
 }
 std::string Song::getTypesong() const{
-    return type_song;
+    return type;
 }
 int Song::getDuration() const{
     return duration;
@@ -47,8 +47,8 @@ void Song::setArtist(std::string artist){
 void Song::setAlbum(std::string album){
     this->album = album;
 }
-void Song::setTypesong(std::string type_song){
-    this->type_song = type_song;
+void Song::setTypesong(std::string type){
+    this->type = type;
 }
 void Song::setDuration(int duration){
     this->duration = duration;
@@ -67,7 +67,7 @@ void Song::display() const{
     std::cout << "Ten bai hat: " << name << std::endl;
     std::cout << "Nghe si: " << artist << std::endl;
     std::cout << "Album: " << album << std::endl;
-    std::cout << "The loai: " << type_song << std::endl;
+    std::cout << "The loai: " << type << std::endl;
     std::cout << "Thoi luong: " << duration << " giay" << std::endl;
     std::cout << "Ngay phat hanh: " << date_release << std::endl;
     std::cout << "Luot nghe: " << count_playsong << std::endl;

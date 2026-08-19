@@ -5,11 +5,11 @@ class Artist{
         std::string id_artist;
         std::string name_artist;
         std::string country;
-        std::string type_play;
+        std::string type;
     public:
         Artist();
         Artist(std::string id_artist, std::string name_artist, 
-               std::string country, std::string type_play);
+               std::string country, std::string type);
         std::string getIdArtist() const;
         std::string getNameArtist() const;
         std::string getCountry() const;
@@ -17,6 +17,6 @@ class Artist{
         void setIdArtist(std::string id_artist);
         void setNameArtist(std::string name_artist);
         void setCountry(std::string country);
-        void setTypePlay(std::string type_play);
+        void setTypePlay(std::string type);
         void show() const;
 };

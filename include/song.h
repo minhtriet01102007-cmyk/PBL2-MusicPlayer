@@ -6,14 +6,14 @@ class Song{
        std::string name;
        std::string artist;
        std::string album;
-       std::string type_song;
+       std::string type;
        int duration;
        std::string date_release;
        int count_playsong;
     public:
         Song();
         Song(std::string id_song, std::string name, std::string artist, 
-            std::string album, std::string type_song, int duration, 
+            std::string album, std::string type, int duration, 
             std::string date_release, int count_playsong);
         std::string getIdsong() const;
         std::string getName() const;
@@ -27,7 +27,7 @@ class Song{
         void setName(std::string name);
         void setArtist(std::string artist);
         void setAlbum(std::string album);
-        void setTypesong(std::string type_song);
+        void setTypesong(std::string type);
         void setDuration(int duration);
         void setDateRelease(std::string date_release);
         void setCount(int count_playsong);
