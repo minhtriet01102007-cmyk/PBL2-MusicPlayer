@@ -10,7 +10,7 @@ int main(){
     song.increasePlayCount();
     std::cout << "Luot nghe hien tai: " << song.getCount() << std::endl;
     std::cout << "=================================" << "\n";
-    Artist artist("A001", "Dangrangto", "Viet Nam", "Ballad");
+    Artist artist("A001", "Dangrangto", " ", "VietNam", 100);
     artist.show();
     std::cout << "=================================" << std::endl;
     Album album("B001", "Mini-EP", "Dangrangto", "2026-02-28", "Ballad");
