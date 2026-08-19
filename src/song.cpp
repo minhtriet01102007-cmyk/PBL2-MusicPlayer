@@ -62,6 +62,9 @@ void Song::setCount(int count_playsong){
 void Song::increasePlayCount(){
     count_playsong++;
 }
+void Song::resetPlayCount(){
+    count_playsong = 0;
+}
 void Song::display() const{
     std::cout << "ID: " << id_song << std::endl;
     std::cout << "Ten bai hat: " << name << std::endl;

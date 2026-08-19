@@ -32,5 +32,6 @@ class Song{
         void setDateRelease(std::string date_release);
         void setCount(int count_playsong);
         void increasePlayCount();
+        void resetPlayCount();
         void display() const;
 };
