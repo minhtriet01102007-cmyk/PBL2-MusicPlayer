@@ -43,3 +43,4 @@ bool Listening_History::empty() const{
 int Listening_History::getSize() const{
     return top + 1;
 }
+
