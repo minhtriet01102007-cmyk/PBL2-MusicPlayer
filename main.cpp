@@ -2,6 +2,7 @@
 #include "include/artist.h"
 #include "include/album.h"
 #include "include/listening_history.h"
+#include "include/queue.h"
 #include <iostream>
 
 int main(){
@@ -30,7 +31,31 @@ int main(){
     }
     std::cout << "\nXoa bai hat moi nhat...\n";
     history.pop();
-    std::cout << "So bai hat con lai: "
-              << history.getSize() << std::endl;
+    std::cout << "So bai hat con lai: " << history.getSize() << std::endl;
+
+    std::cout << "\n===== PLAY QUEUE =====\n";
+
+    Queue Q;
+    Q.enqueue(song);
+    Song song2("S002", "Bai hat thu hai", "Artist 2",   "Album 2", "Pop", 200,  
+               "2026-03-01", 1000);
+    Song song3("S003", "Bai hat thu ba", "Artist 3", "Album 3", "Rock", 180,
+               "2026-03-02", 2000);
+    Q.enqueue(song2);
+    Q.enqueue(song3);   
+    std::cout << "So bai hat trong hang doi: "  << Q.getSize() << std::endl;
+    Song* frontSong = Q.getFront();
+    if (frontSong != nullptr){
+        std::cout << "\nBai hat se phat tiep theo:\n";
+        frontSong->display();
+    }
+    std::cout << "\nPhat xong bai hat dau tien...\n";
+    Q.dequeue();
+    std::cout << "So bai hat con lai: " << Q.getSize() << std::endl;
+    frontSong = Q.getFront();
+    if (frontSong != nullptr){
+        std::cout << "\nBai hat tiep theo:\n";
+        frontSong->display();
+    }
     return 0;
 }
