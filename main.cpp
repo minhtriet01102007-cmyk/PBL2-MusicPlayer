@@ -3,6 +3,7 @@
 #include "include/album.h"
 #include "include/listening_history.h"
 #include "include/queue.h"
+#include "include/playlist.h"
 #include <iostream>
 
 int main(){
@@ -57,5 +58,17 @@ int main(){
         std::cout << "\nBai hat tiep theo:\n";
         frontSong->display();
     }
+
+    Playlist playlist;
+    playlist.add(song);
+    playlist.add(song2);
+    playlist.add(song3);
+    std::cout << "So bai hat trong Playlist: "  << playlist.getSize() << std::endl;
+    playlist.display();
+    std::cout << "\nXoa bai hat o vi tri 1...\n";
+    playlist.remove(1);
+    std::cout << "\nPlaylist sau khi xoa:\n";
+    playlist.display(); 
+    std::cout << "So bai hat con lai: " << playlist.getSize() << std::endl;
     return 0;
 }
