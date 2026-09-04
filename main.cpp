@@ -4,6 +4,7 @@
 #include "include/listening_history.h"
 #include "include/queue.h"
 #include "include/playlist.h"
+#include "include/search.h"
 #include <iostream>
 
 int main(){
@@ -21,8 +22,8 @@ int main(){
     std::cout << "\n===== LISTENING HISTORY =====\n";
     Listening_History history;
     history.push(song);
-    Song song2("S002", "Bai hat thu hai", "Artist 2", "Album 2", "Pop", 200, "2026-03-01", 1000);
-    history.push(song2);
+    Song song1("S002", "Bai hat thu hai", "Artist 2", "Album 2", "Pop", 200, "2026-03-01", 1000);
+    history.push(song1);
     std::cout << "So bai hat trong lich su: "
               << history.getSize() << std::endl;
     Song* topSong = history.getTop();
@@ -70,5 +71,24 @@ int main(){
     std::cout << "\nPlaylist sau khi xoa:\n";
     playlist.display(); 
     std::cout << "So bai hat con lai: " << playlist.getSize() << std::endl;
+
+    Song songs[3] = {Song("S001", "De danh cho em", "Dangrangto", 
+        "Mini-EP", "Ballad", 294, "2026-02-28", 414000),
+    Song("S002", "Bai hat 2", "Artist 2",
+         "Album 2", "Pop", 200, "2026-01-01", 1000),
+    Song("S003", "Bai hat 3", "Artist 3",
+         "Album 3", "Rock", 250, "2026-01-02", 2000)
+    };
+    std::string id_song;
+    std::cout << "Nhap ID bai hat can tim: ";
+    std::cin >> id_song;
+    int index = Search::linearSearchById(songs, 3, id_song);
+    if (index != -1){
+        std::cout << "Tim thay bai hat tai vi tri: " << index << std::endl;
+        songs[index].display();
+    }
+    else{
+        std::cout << "Khong tim thay bai hat!" << std::endl;
+    }
     return 0;
 }
