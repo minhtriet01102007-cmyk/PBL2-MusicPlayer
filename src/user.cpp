@@ -14,25 +14,25 @@ User::User(std::string id_user, std::string name_user, std::string password,
 User::~User()
 {}
 std::string User::getIdUser() const{
-    return id_user;
+    return this->id_user;
 }
 std::string User::getNameuser() const{
-    return name_user;
+    return this->name_user;
 }
 std::string User::getEmail() const{
-    return email;
+    return this->email;
 }
 std::string User::getPhoneNumber() const{
-    return phone_number;
+    return this->phone_number;
 }
 std::string User::getDisplayName() const{
-    return display_name;
+    return this->display_name;
 }
 std::string User::getAvatar() const{
-    return avatar;
+    return this->avatar;
 }
 bool User::getIsActive() const{
-    return is_active;
+    return this->is_active;
 }
 void User::setIdname(std::string id_user){
     this->id_user = id_user;

@@ -9,19 +9,19 @@ Album::Album(std::string id_album, std::string name_album, std::string artist,
           date_release(date_release), type(type)
 {}
 std::string Album::getIdAlbum() const{
-    return id_album;
+    return this->id_album;
 }
 std::string Album::getNameAlbum() const{
-    return name_album;
+    return this->name_album;
 }
 std::string Album::getArtist() const{
-    return artist;
+    return this->artist;
 }
 std::string Album::getDateRelease() const{
-    return date_release;
+    return this->date_release;
 }
 std::string Album::getType() const{
-    return type;
+    return this->type;
 }
 void Album::setIdAlbum(std::string id_album){
     this->id_album = id_album;

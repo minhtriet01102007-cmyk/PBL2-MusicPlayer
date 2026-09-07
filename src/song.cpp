@@ -11,29 +11,28 @@ Song::Song(std::string id_song, std::string name, std::string artist, std::strin
       date_release(date_release), count_playsong(count_playsong)
 {}
 std::string Song::getIdsong() const{
-    return id_song;
+    return this->id_song;
 }
 std::string Song::getName() const{
-    return name;
+    return this->name;
 }
 std::string Song::getArtist() const{
-    return artist;
+    return this->artist;
 }
-
 std::string Song::getAlbum() const{
-    return album;
+    return this->album;
 }
 std::string Song::getTypesong() const{
-    return type;
+    return this->type;
 }
 int Song::getDuration() const{
-    return duration;
+    return this->duration;
 }
 std::string Song::getDateRelease() const{
-    return date_release;
+    return this->date_release;
 }
 int Song::getCount() const{
-    return count_playsong;
+    return this->count_playsong;
 }
 void Song::setIdsong(std::string id_song){
     this->id_song = id_song;

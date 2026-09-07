@@ -8,19 +8,19 @@ Artist::Artist(std::string id_artist, std::string name_artist, std::string bio,
     : id_artist(id_artist), name_artist(name_artist), bio(bio), country(country), followers(followers)
 {}
 std::string Artist::getIdArtist() const{
-    return id_artist;
+    return this->id_artist;
 }
 std::string Artist::getNameArtist() const{
-    return name_artist;
+    return this->name_artist;
 }
 std::string Artist::getBio() const{
-    return bio;
+    return this->bio;
 }
 std::string Artist::getCountry() const{
-    return country;
+    return this->country;
 }
 long long Artist::getFollowers() const{
-    return followers;
+    return this->followers;
 }
 void Artist::setIdArtist(std::string id_artist){
     this->id_artist = id_artist;
