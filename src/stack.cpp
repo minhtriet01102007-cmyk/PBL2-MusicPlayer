@@ -1,4 +1,4 @@
-#include "../include/listening_history.h"
+#include "../include/stack.h"
 #include <iostream>
 
 Listening_History::Listening_History(){
@@ -37,7 +37,7 @@ Song* Listening_History::getTop() const{
     return &history[top];
 }
 bool Listening_History::empty() const{
-    return top == nullptr;
+    return top == -1;
 }
 int Listening_History::getSize() const{
     return top + 1;
