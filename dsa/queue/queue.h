@@ -59,7 +59,7 @@ inline bool Queue::IsEmpty() const{
     return this->size == 0;
 }
 inline bool Queue::IsFull() const{
-    return this->size == capacity;
+    return this->size == this->capacity;
 }
 inline int Queue::getFront() const{
     if (IsEmpty()){
