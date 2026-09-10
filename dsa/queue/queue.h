@@ -1,7 +1,7 @@
 #pragma once
 #include <iostream>
 
-struct Queue{
+class Queue{
     private:
         int* data;
         int capacity;
