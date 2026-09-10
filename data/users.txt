@@ -1,0 +1,4 @@
+user_id|username|password|email|phone_number|display_name|avatar|is_active|role
+U001|admin|123456|admin@soundwave.com|0905000000|SoundWave Admin|admin.jpg|1|Admin
+U002|triet|123456|triet@gmail.com|0905123456|Minh Triet|avatar.jpg|1|Listener
+U003|listener01|123456|listener01@gmail.com|0905111111|Listener One|avatar1.jpg|1|Listener

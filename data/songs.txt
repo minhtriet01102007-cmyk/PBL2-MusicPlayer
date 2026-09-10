@@ -1,0 +1,4 @@
+id|title|artist|album|genre|duration|releaseDate|playCount
+S001|De danh cho em|Dangrangto|Mini-EP|Ballad|294|2026-02-28|414000
+S002|Song 2|Artist 2|Album 2|Pop|210|2026-01-15|125000
+S003|Song 3|Artist 3|Album 3|R&B|240|2026-03-10|98000
