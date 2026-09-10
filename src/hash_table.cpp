@@ -1,2 +1,0 @@
-#include "hashtable.h"
-
