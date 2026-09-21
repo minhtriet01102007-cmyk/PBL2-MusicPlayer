@@ -26,110 +26,109 @@ class MaxHeap{
         void display() const;
         void clear();
 };
-
-inline MaxHeap::MaxHeap() {
+inline MaxHeap::MaxHeap(){
     this->capacity = 10;
     this->size = 0;
     this->data = new int[this->capacity];
 }
-inline MaxHeap::MaxHeap(int cap) {
+inline MaxHeap::MaxHeap(int cap){
     this->capacity = (cap > 0) ? cap : 10;
     this->size = 0;
     this->data = new int[this->capacity];
 }
-inline MaxHeap::~MaxHeap() {
+inline MaxHeap::~MaxHeap(){
     delete[] this->data;
     this->data = nullptr;
 }
-inline int MaxHeap::parent(int i) const {
+inline int MaxHeap::parent(int i) const{
     return (i - 1) / 2;
 }
-inline int MaxHeap::leftChild(int i) const {
+inline int MaxHeap::leftChild(int i) const{
     return 2 * i + 1;
 }
-inline int MaxHeap::rightChild(int i) const {
+inline int MaxHeap::rightChild(int i) const{
     return 2 * i + 2;
 }
-inline void MaxHeap::swap(int& a, int& b) {
+inline void MaxHeap::swap(int& a, int& b){
     int temp = a;
     a = b;
     b = temp;
 }
-inline bool MaxHeap::empty() const {
+inline bool MaxHeap::empty() const{
     return this->size == 0;
 }
-inline bool MaxHeap::isFull() const {
+inline bool MaxHeap::isFull() const{
     return this->size == this->capacity;
 }
-inline int MaxHeap::getSize() const {
+inline int MaxHeap::getSize() const{
     return this->size;
 }
-inline void MaxHeap::resize() {
+inline void MaxHeap::resize(){
     this->capacity *= 2;
     int* newData = new int[this->capacity];
-    for (int i = 0; i < this->size; i++) {
+    for (int i = 0; i < this->size; i++){ // Copy dữ liệu cũ
         newData[i] = this->data[i];
     }
     delete[] this->data;
     this->data = newData;
 }
-inline void MaxHeap::heapifyUp(int index) {
-    while (index > 0 && this->data[parent(index)] < this->data[index]) {
+inline void MaxHeap::heapifyUp(int index){ //Sau khi thêm một phần tử, đưa phần tử đó lên trên nếu nó lớn hơn cha
+    while (index > 0 && this->data[parent(index)] < this->data[index]){
         this->swap(this->data[parent(index)], this->data[index]);
         index = parent(index);
     }
 }
-inline void MaxHeap::insert(int value) {
-    if (this->isFull()) {
-        this->resize(); // Tu dong no dung luong khi day
+inline void MaxHeap::insert(int value){ 
+    if (this->isFull()){
+        this->resize(); // Tự động tăng dung lượng khi đầy
     }
-    this->data[this->size] = value;
+    this->data[this->size] = value; // Thêm phần tử vào cuối heap
     this->size++;
     this->heapifyUp(this->size - 1);
 }
-inline void MaxHeap::heapifyDown(int index) {
-    int largest = index;
+inline void MaxHeap::heapifyDown(int index){
+    int largest = index; // node hiện tại lớn nhất
     int left = this->leftChild(index);
     int right = this->rightChild(index);
-    if (left < this->size && this->data[left] > this->data[largest]) {
+    if (left < this->size && this->data[left] > this->data[largest]){
         largest = left;
     }
-    if (right < this->size && this->data[right] > this->data[largest]) {
+    if (right < this->size && this->data[right] > this->data[largest]){
         largest = right;
     }
-    if (largest != index) {
+    if (largest != index){
         this->swap(this->data[index], this->data[largest]);
-        this->heapifyDown(largest);
+        this->heapifyDown(largest); // tiếp tục kiểm tra ở vị trí mới
     }
 }
-inline int MaxHeap::getMax() const {
-    if (this->empty()) {
-        std::cout << "Heap rong!\n";
+inline int MaxHeap::getMax() const{
+    if (this->empty()){
+        std::cout << "Heap rong" << std::endl;
         return -1;
     }
     return this->data[0];
 }
-inline int MaxHeap::extractMax() {
-    if (this->empty()) {
-        std::cout << "Heap rong, khong the lay phan tu!\n";
+inline int MaxHeap::extractMax(){ // Lấy và xóa phần tử lớn nhất
+    if (this->empty()){
+        std::cout << "Heap rong, khong the lay phan tu" << std::endl;
         return -1;
     }
     int maxValue = this->data[0];
-    this->data[0] = this->data[this->size - 1];
+    this->data[0] = this->data[this->size - 1]; // lấy phần tử cuối đưa lên đầu
     this->size--;
     this->heapifyDown(0);
     return maxValue;
 }
-inline void MaxHeap::clear() {
+inline void MaxHeap::clear(){
     this->size = 0;
 }
-inline void MaxHeap::display() const {
-    if (this->empty()) {
-        std::cout << "Heap rong!\n";
+inline void MaxHeap::display() const{
+    if (this->empty()){
+        std::cout << "Heap rong" << std::endl;
         return;
     }
     std::cout << "Max-Heap: ";
-    for (int i = 0; i < this->size; i++) {
+    for (int i = 0; i < this->size; i++){
         std::cout << this->data[i] << " ";
     }
     std::cout << "\n";
