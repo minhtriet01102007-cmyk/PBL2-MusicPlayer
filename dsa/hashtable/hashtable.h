@@ -7,7 +7,7 @@ class HashTable{
         HashNode* table;
         int capacity;
         int size;
-        int hashFunction(int key) const;
+        int hashFunction(int key) const; // Biến key thành index của mảng
     public:
         HashTable();
         HashTable(int capacity);
@@ -28,8 +28,8 @@ inline HashTable::HashTable(){
     this->capacity = 101;
     this->size = 0;
     this->table = new HashNode[this->capacity];
-    for (int i = 0; i < this->capacity; i++) {
-        this->table[i].state = EMPTY;
+    for (int i = 0; i < this->capacity; i++){
+        this->table[i].state = EMPTY; // Đánh dấu tất cả ô là trống
     }
 }
 inline HashTable::HashTable(int capacity){
@@ -37,12 +37,12 @@ inline HashTable::HashTable(int capacity){
     this->size = 0;
     this->table = new HashNode[this->capacity];
     for (int i = 0; i < this->capacity; i++){
-        this->table[i].state = EMPTY;
+        this->table[i].state = EMPTY; // Đánh dấu tất cả ô là trống
     }
 }
 inline HashTable::~HashTable(){
     delete[] this->table;
-    this->table = nullptr;
+    this->table = nullptr; // tránh tình trạng con trỏ lạc
 }
 inline bool HashTable::isEmpty() const{
     return this->size == 0;
@@ -51,24 +51,24 @@ inline int HashTable::getSize() const{
     return this->size;
 }
 inline bool HashTable::insert(int key, int value){
-    if (this->size >= this->capacity) {
+    if (this->size >= this->capacity){
         std::cout << "Bang bam da day" << std::endl;
         return false;
     }
     int index = this->hashFunction(key);
-    int firstDeletedIndex = -1;
+    int firstDeletedIndex = -1; // Biến này dùng để ghi nhớ ô DELETED đầu tiên gặp được, Chưa tìm thấy ô DELETED nào
     for (int i = 0; i < this->capacity; i++){
-        int currentIndex = (index + i) % this->capacity;
+        int currentIndex = (index + i) % this->capacity; // Linear Probing: Dò tuyến tính
         if (this->table[currentIndex].state == OCCUPIED){
-            if (this->table[currentIndex].key == key) {
-                this->table[currentIndex].value = value; // Cap nhat gia tri neu trung key
+            if (this->table[currentIndex].key == key){
+                this->table[currentIndex].value = value; // Cập nhật giá trị nếu trùng key
                 return true;
             }
         } else if (this->table[currentIndex].state == DELETED){
             if (firstDeletedIndex == -1){
-                firstDeletedIndex = currentIndex;
+                firstDeletedIndex = currentIndex; // Lưu lại vị trí DELETED đầu tiên
             }
-        } else { // EMPTY
+        } else{ // EMPTY
             int insertIndex = (firstDeletedIndex != -1) ? firstDeletedIndex : currentIndex;
             this->table[insertIndex].key = key;
             this->table[insertIndex].value = value;
@@ -84,9 +84,9 @@ inline bool HashTable::insert(int key, int value){
         this->size++;
         return true;
     }
-    return false;
+    return false; // Không có EMPTY và DELETED => OCCUPIED => Không thể thêm
 }
-inline bool HashTable::search(int key, int& outValue) const{
+inline bool HashTable::search(int key, int& outValue) const{ // Tìm key và lấy value ra
     int index = this->hashFunction(key);
     for (int i = 0; i < this->capacity; i++){
         int currentIndex = (index + i) % this->capacity;
@@ -98,7 +98,7 @@ inline bool HashTable::search(int key, int& outValue) const{
             return true;
         }
     }
-    return false;
+    return false; // Không có EMPTY và DELETED => OCCUPIED => Không thể thêm
 }
 inline bool HashTable::remove(int key){
     int index = this->hashFunction(key);
@@ -113,7 +113,7 @@ inline bool HashTable::remove(int key){
             return true;
         }
     }
-    return false;
+    return false; // Không có EMPTY và DELETED => OCCUPIED => Không thể thêm
 }
 inline void HashTable::clear(){
     for (int i = 0; i < this->capacity; i++){
