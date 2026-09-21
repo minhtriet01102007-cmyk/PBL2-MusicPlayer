@@ -24,8 +24,8 @@ class Queue{
 inline Queue::Queue(){
     this->capacity = 10;
     this->data = new int[this->capacity];
-    this->front = 0;
-    this->rear = -1;
+    this->front = 0; 
+    this->rear = -1; 
     this->size = 0;
 }
 
@@ -49,7 +49,7 @@ inline bool Queue::isFull() const{
 inline int Queue::getSize() const{
     return this->size;
 }
-inline bool Queue::enqueue(int value){
+inline bool Queue::enqueue(int value){ //Thêm vào cuối 
     if (this->isFull()){
         std::cout << "Queue da day, khong the them\n";
         return false;
@@ -59,8 +59,8 @@ inline bool Queue::enqueue(int value){
     this->size++;
     return true;
 }
-inline bool Queue::dequeue(){
-    if (this->isEmpty()) {
+inline bool Queue::dequeue(){ //Lấy đầu
+    if (this->isEmpty()){
         std::cout << "Queue rong, khong the lay phan tu\n";
         return false;
     }
@@ -68,8 +68,8 @@ inline bool Queue::dequeue(){
     this->size--;
     return true;
 }
-inline int Queue::peek() const{
-    if (this->isEmpty()) {
+inline int Queue::peek() const{ //xem phần tử đầu Queue nhưng k xóa nó
+    if (this->isEmpty()){
         std::cout << "Queue rong\n";
         return -1;
     }
@@ -81,7 +81,7 @@ inline void Queue::clear(){
     this->size = 0;
 }
 inline void Queue::display() const{
-    if (this->isEmpty()) {
+    if (this->isEmpty()){
         std::cout << "Queue rong\n";
         return;
     }
