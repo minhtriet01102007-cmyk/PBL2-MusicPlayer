@@ -1,32 +1,132 @@
 #pragma once
+#include <iostream>
+#include "hashtablenode.h"
 
-struct HashNode
-{
-    int key;
-    int value;
-    bool occupied;
+class HashTable{
+    private:
+        HashNode* table;
+        int capacity;
+        int size;
+        int hashFunction(int key) const;
+    public:
+        HashTable();
+        HashTable(int capacity);
+        ~HashTable();
+        bool insert(int key, int value);
+        bool search(int key, int& outValue) const;
+        bool remove(int key);
+        bool isEmpty() const;
+        int getSize() const;
+        void display() const;
+        void clear();
 };
-
-struct HashTable
-{
-private:
-    HashNode* table;
-    int capacity;
-    int size;
-
-    int hashFunction(int key) const;
-
-public:
-    HashTable();
-    HashTable(int capacity);
-    ~HashTable();
-
-    void insert(int key, int value);
-    bool search(int key, int& value) const;
-    void remove(int key);
-
-    bool empty() const;
-    int getSize() const;
-
-    void display() const;
-};
+inline int HashTable::hashFunction(int key) const{
+    int hash = key % this->capacity;
+    return (hash < 0) ? (hash + this->capacity) : hash;
+}
+inline HashTable::HashTable(){
+    this->capacity = 101;
+    this->size = 0;
+    this->table = new HashNode[this->capacity];
+    for (int i = 0; i < this->capacity; i++) {
+        this->table[i].state = EMPTY;
+    }
+}
+inline HashTable::HashTable(int capacity){
+    this->capacity = (capacity > 0) ? capacity : 101;
+    this->size = 0;
+    this->table = new HashNode[this->capacity];
+    for (int i = 0; i < this->capacity; i++){
+        this->table[i].state = EMPTY;
+    }
+}
+inline HashTable::~HashTable(){
+    delete[] this->table;
+    this->table = nullptr;
+}
+inline bool HashTable::isEmpty() const{
+    return this->size == 0;
+}
+inline int HashTable::getSize() const{
+    return this->size;
+}
+inline bool HashTable::insert(int key, int value){
+    if (this->size >= this->capacity) {
+        std::cout << "Bang bam da day" << std::endl;
+        return false;
+    }
+    int index = this->hashFunction(key);
+    int firstDeletedIndex = -1;
+    for (int i = 0; i < this->capacity; i++){
+        int currentIndex = (index + i) % this->capacity;
+        if (this->table[currentIndex].state == OCCUPIED){
+            if (this->table[currentIndex].key == key) {
+                this->table[currentIndex].value = value; // Cap nhat gia tri neu trung key
+                return true;
+            }
+        } else if (this->table[currentIndex].state == DELETED){
+            if (firstDeletedIndex == -1){
+                firstDeletedIndex = currentIndex;
+            }
+        } else { // EMPTY
+            int insertIndex = (firstDeletedIndex != -1) ? firstDeletedIndex : currentIndex;
+            this->table[insertIndex].key = key;
+            this->table[insertIndex].value = value;
+            this->table[insertIndex].state = OCCUPIED;
+            this->size++;
+            return true;
+        }
+    }
+    if (firstDeletedIndex != -1){
+        this->table[firstDeletedIndex].key = key;
+        this->table[firstDeletedIndex].value = value;
+        this->table[firstDeletedIndex].state = OCCUPIED;
+        this->size++;
+        return true;
+    }
+    return false;
+}
+inline bool HashTable::search(int key, int& outValue) const{
+    int index = this->hashFunction(key);
+    for (int i = 0; i < this->capacity; i++){
+        int currentIndex = (index + i) % this->capacity;
+        if (this->table[currentIndex].state == EMPTY){
+            return false;
+        }
+        if (this->table[currentIndex].state == OCCUPIED && this->table[currentIndex].key == key){
+            outValue = this->table[currentIndex].value;
+            return true;
+        }
+    }
+    return false;
+}
+inline bool HashTable::remove(int key){
+    int index = this->hashFunction(key);
+    for (int i = 0; i < this->capacity; i++){
+        int currentIndex = (index + i) % this->capacity;
+        if (this->table[currentIndex].state == EMPTY){
+            return false;
+        }
+        if (this->table[currentIndex].state == OCCUPIED && this->table[currentIndex].key == key){
+            this->table[currentIndex].state = DELETED;
+            this->size--;
+            return true;
+        }
+    }
+    return false;
+}
+inline void HashTable::clear(){
+    for (int i = 0; i < this->capacity; i++){
+        this->table[i].state = EMPTY;
+    }
+    this->size = 0;
+}
+inline void HashTable::display() const{
+    std::cout << "HashTable:" << std::endl;
+    for (int i = 0; i < this->capacity; i++){
+        if (this->table[i].state == OCCUPIED){
+            std::cout << "  [" << i << "] Key: " << this->table[i].key
+                      << " => Value: " << this->table[i].value << std::endl;
+        }
+    }
+}

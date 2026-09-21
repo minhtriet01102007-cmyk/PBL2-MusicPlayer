@@ -1,7 +1,7 @@
 #include "include/song.h"
 #include "include/artist.h"
 #include "include/album.h"
-#include "include/listening_history.h"
+#include "include/stack.h"
 #include "include/queue.h"
 #include "include/playlist.h"
 #include "include/search.h"
