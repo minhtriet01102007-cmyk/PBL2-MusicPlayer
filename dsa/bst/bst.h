@@ -4,9 +4,8 @@
 
 class BST{
     private:
-        BSTNode* root;
+        BSTNode* root; // node gốc
         int size;
-        // Các hàm đệ quy phụ trợ nội bộ
         BSTNode* insertHelper(BSTNode* node, int value);
         BSTNode* removeHelper(BSTNode* node, int value);
         bool searchHelper(BSTNode* node, int value) const;
@@ -37,14 +36,14 @@ inline bool BST::IsEmpty() const{
 inline int BST::getSize() const{
     return this->size;
 }
-inline BSTNode* BST::findMin(BSTNode* node) const{ // Tìm node nhỏ nhất ở cây con bên phải 
+inline BSTNode* BST::findMin(BSTNode* node) const{ // Tìm node nhỏ nhất  
     while (node->left != nullptr){
         node = node->left;
     }
     return node;
 }
-inline BSTNode* BST::insertHelper(BSTNode* node, int value){
-    if (node == nullptr){
+inline BSTNode* BST::insertHelper(BSTNode* node, int value){ // Đệ quy tìm vị trí thích hợp rồi chèn node mới
+    if (node == nullptr){ // Vị trí trống
         BSTNode* newNode = new BSTNode;
         newNode->data = value;
         newNode->left = nullptr;
@@ -62,7 +61,7 @@ inline BSTNode* BST::insertHelper(BSTNode* node, int value){
 inline void BST::insert(int value){
     this->root = insertHelper(this->root, value);
 }
-inline bool BST::searchHelper(BSTNode* node, int value) const{
+inline bool BST::searchHelper(BSTNode* node, int value) const{ // Tìm xem value có trong cây không
     if (node == nullptr){
         return false;
     }
@@ -85,22 +84,24 @@ inline BSTNode* BST::removeHelper(BSTNode* node, int value){
         node->left = removeHelper(node->left, value);
     } else if (value > node->data){
         node->right = removeHelper(node->right, value);
-    } else {
-        if (node->left == nullptr){
+    } else { // trường hợp value = node->data
+        if (node->left == nullptr){ // node không có con trái
             BSTNode* temp = node->right;
             delete node;
             this->size--;
             return temp;
         }
-        else if (node->right == nullptr){
+        else if (node->right == nullptr){ // node không có con phải
             BSTNode* temp = node->left;
             delete node;
             this->size--;
             return temp;
         }
-        BSTNode* temp = findMin(node->right);
-        node->data = temp->data;
-        node->right = removeHelper(node->right, temp->data);
+        else if (node->left != nullptr && node->right != nullptr){ // node có cả 2 con
+            BSTNode* temp = findMin(node->right);
+            node->data = temp->data;
+            node->right = removeHelper(node->right, temp->data);
+        }
     }
     return node;
 }
