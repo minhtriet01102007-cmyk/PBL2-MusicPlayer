@@ -1,0 +1,4 @@
+id_album|name_album|artist|date_release|type
+AL001|Mini-EP|Dangrangto|2026-02-28|EP
+AL002|Album 2|Artist 2|2026-01-15|Album
+AL003|Album 3|Artist 3|2026-03-10|Album
