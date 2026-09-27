@@ -9,7 +9,6 @@ class HashTable{
         int size;
         int hashFunction(int key) const; // Biến key thành index của mảng
     public:
-        HashTable();
         HashTable(int capacity);
         ~HashTable();
         bool insert(int key, int value);
@@ -23,14 +22,6 @@ class HashTable{
 int HashTable::hashFunction(int key) const{
     int hash = key % this->capacity;
     return (hash < 0) ? (hash + this->capacity) : hash;
-}
-HashTable::HashTable(){
-    this->capacity = 101;
-    this->size = 0;
-    this->table = new HashNode[this->capacity];
-    for (int i = 0; i < this->capacity; i++){
-        this->table[i].state = EMPTY; // Đánh dấu tất cả ô là trống
-    }
 }
 HashTable::HashTable(int capacity){
     this->capacity = (capacity > 0) ? capacity : 101;
