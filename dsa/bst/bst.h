@@ -23,26 +23,26 @@ class BST{
         int getSize() const;
         void clear();
 };
-inline BST::BST(){
+BST::BST(){
     this->root = nullptr;
     this->size = 0;
 }
-inline BST::~BST(){
+BST::~BST(){
     this->clear();
 }
-inline bool BST::IsEmpty() const{
+bool BST::IsEmpty() const{
     return this->root == nullptr;
 }
-inline int BST::getSize() const{
+int BST::getSize() const{
     return this->size;
 }
-inline BSTNode* BST::findMin(BSTNode* node) const{ // Tìm node nhỏ nhất  
+BSTNode* BST::findMin(BSTNode* node) const{ // Tìm node nhỏ nhất  
     while (node->left != nullptr){
         node = node->left;
     }
     return node;
 }
-inline BSTNode* BST::insertHelper(BSTNode* node, int value){ // Đệ quy tìm vị trí thích hợp rồi chèn node mới
+BSTNode* BST::insertHelper(BSTNode* node, int value){ // Đệ quy tìm vị trí thích hợp rồi chèn node mới
     if (node == nullptr){ // Vị trí trống
         BSTNode* newNode = new BSTNode;
         newNode->data = value;
@@ -58,10 +58,10 @@ inline BSTNode* BST::insertHelper(BSTNode* node, int value){ // Đệ quy tìm v
     }
     return node;
 }
-inline void BST::insert(int value){
+void BST::insert(int value){
     this->root = insertHelper(this->root, value);
 }
-inline bool BST::searchHelper(BSTNode* node, int value) const{ // Tìm xem value có trong cây không
+bool BST::searchHelper(BSTNode* node, int value) const{ // Tìm xem value có trong cây không
     if (node == nullptr){
         return false;
     }
@@ -73,10 +73,10 @@ inline bool BST::searchHelper(BSTNode* node, int value) const{ // Tìm xem value
     }
     return searchHelper(node->right, value);
 }
-inline bool BST::search(int value) const{
+bool BST::search(int value) const{
     return searchHelper(this->root, value);
 }
-inline BSTNode* BST::removeHelper(BSTNode* node, int value){
+BSTNode* BST::removeHelper(BSTNode* node, int value){
     if (node == nullptr){
         return nullptr;
     }
@@ -105,17 +105,17 @@ inline BSTNode* BST::removeHelper(BSTNode* node, int value){
     }
     return node;
 }
-inline void BST::remove(int value){
+void BST::remove(int value){
     this->root = removeHelper(this->root, value);
 }
-inline void BST::inorderHelper(BSTNode* node) const{
+void BST::inorderHelper(BSTNode* node) const{
     if (node != nullptr){
         inorderHelper(node->left);
         std::cout << node->data << " ";
         inorderHelper(node->right);
     }
 }
-inline void BST::inorder() const{
+void BST::inorder() const{
     if (IsEmpty()){
         std::cout << "Cay BST dang rong" << std::endl;
         return;
@@ -124,14 +124,14 @@ inline void BST::inorder() const{
     inorderHelper(this->root);
     std::cout << std::endl;
 }
-inline void BST::clearHelper(BSTNode* node){
+void BST::clearHelper(BSTNode* node){
     if (node != nullptr){
         clearHelper(node->left);
         clearHelper(node->right);
         delete node;
     }
 }
-inline void BST::clear(){
+void BST::clear(){
     clearHelper(this->root);
     this->root = nullptr;
     this->size = 0;
