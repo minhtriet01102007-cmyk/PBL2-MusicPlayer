@@ -24,23 +24,22 @@ class DoublyLinkedList{
         void displayForward() const;
         void displayBackward() const;
 };
-
-inline DoublyLinkedList::DoublyLinkedList(){
+DoublyLinkedList::DoublyLinkedList(){
     this->head = nullptr;
     this->tail = nullptr;
     this->current = nullptr;
     this->size = 0;
 }
-inline DoublyLinkedList::~DoublyLinkedList(){
+DoublyLinkedList::~DoublyLinkedList(){
     this->clear();
 }
-inline bool DoublyLinkedList::isEmpty() const{
+bool DoublyLinkedList::isEmpty() const{
     return this->head == nullptr;
 }
-inline int DoublyLinkedList::getSize() const{
+int DoublyLinkedList::getSize() const{
     return this->size;
 }
-inline void DoublyLinkedList::pushBack(int value){ // Thêm cuối
+void DoublyLinkedList::pushBack(int value){ // Thêm cuối
     Node* newNode = new Node;
     newNode->data = value;
     newNode->next = nullptr;
@@ -55,7 +54,7 @@ inline void DoublyLinkedList::pushBack(int value){ // Thêm cuối
     }
     this->size++;
 }
-inline void DoublyLinkedList::pushFront(int value){ // Thêm đầu
+void DoublyLinkedList::pushFront(int value){ // Thêm đầu
     Node* newNode = new Node;
     newNode->data = value;
     newNode->prev = nullptr;
@@ -70,7 +69,7 @@ inline void DoublyLinkedList::pushFront(int value){ // Thêm đầu
     }
     this->size++;
 }
-inline bool DoublyLinkedList::remove(int value){ // Xóa node có data = value
+bool DoublyLinkedList::remove(int value){ // Xóa node có data = value
     Node* curr = this->head;
     while (curr != nullptr && curr->data != value){
         curr = curr->next;
@@ -95,28 +94,28 @@ inline bool DoublyLinkedList::remove(int value){ // Xóa node có data = value
     this->size--;
     return true;
 }
-inline bool DoublyLinkedList::nextTrack(){
+bool DoublyLinkedList::nextTrack(){
     if (this->current != nullptr && this->current->next != nullptr){
         this->current = this->current->next;
         return true;
     }
     return false;
 }
-inline bool DoublyLinkedList::prevTrack(){
+bool DoublyLinkedList::prevTrack(){
     if (this->current != nullptr && this->current->prev != nullptr){
         this->current = this->current->prev;
         return true;
     }
     return false;
 }
-inline int DoublyLinkedList::getCurrent() const{
+int DoublyLinkedList::getCurrent() const{
     if (this->current == nullptr) return -1;
     return this->current->data;
 }
-inline void DoublyLinkedList::resetCurrent(){
+void DoublyLinkedList::resetCurrent(){
     this->current = this->head;
 }
-inline void DoublyLinkedList::clear(){
+void DoublyLinkedList::clear(){
     Node* curr = this->head;
     while (curr != nullptr){
         Node* nextNode = curr->next;
@@ -128,7 +127,7 @@ inline void DoublyLinkedList::clear(){
     this->current = nullptr;
     this->size = 0;
 }
-inline void DoublyLinkedList::displayForward() const{
+void DoublyLinkedList::displayForward() const{
     Node* temp = this->head;
     std::cout << "List (Forward): ";
     while (temp != nullptr) {
@@ -137,7 +136,7 @@ inline void DoublyLinkedList::displayForward() const{
     }
     std::cout << "\n";
 }
-inline void DoublyLinkedList::displayBackward() const{
+void DoublyLinkedList::displayBackward() const{
     Node* temp = this->tail;
     std::cout << "List (Backward): ";
     while (temp != nullptr) {
