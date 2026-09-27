@@ -9,7 +9,6 @@ class Queue{
         int rear;
         int size;
     public:
-        Queue();
         Queue(int cap);
         ~Queue();
         bool enqueue(int value);
@@ -21,14 +20,6 @@ class Queue{
         void clear();
         void display() const;
 };
-Queue::Queue(){
-    this->capacity = 10;
-    this->data = new int[this->capacity];
-    this->front = 0; 
-    this->rear = -1; 
-    this->size = 0;
-}
-
 Queue::Queue(int cap){
     this->capacity = (cap > 0) ? cap : 10;
     this->data = new int[this->capacity];
