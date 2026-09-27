@@ -14,7 +14,6 @@ class MaxHeap{
         void swap(int& a, int& b);
         void resize();
     public:
-        MaxHeap();
         MaxHeap(int cap);
         ~MaxHeap();
         void insert(int value);
@@ -26,11 +25,6 @@ class MaxHeap{
         void display() const;
         void clear();
 };
-MaxHeap::MaxHeap(){
-    this->capacity = 10;
-    this->size = 0;
-    this->data = new int[this->capacity];
-}
 MaxHeap::MaxHeap(int cap){
     this->capacity = (cap > 0) ? cap : 10;
     this->size = 0;
