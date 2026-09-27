@@ -20,11 +20,11 @@ class HashTable{
         void display() const;
         void clear();
 };
-inline int HashTable::hashFunction(int key) const{
+int HashTable::hashFunction(int key) const{
     int hash = key % this->capacity;
     return (hash < 0) ? (hash + this->capacity) : hash;
 }
-inline HashTable::HashTable(){
+HashTable::HashTable(){
     this->capacity = 101;
     this->size = 0;
     this->table = new HashNode[this->capacity];
@@ -32,7 +32,7 @@ inline HashTable::HashTable(){
         this->table[i].state = EMPTY; // Đánh dấu tất cả ô là trống
     }
 }
-inline HashTable::HashTable(int capacity){
+HashTable::HashTable(int capacity){
     this->capacity = (capacity > 0) ? capacity : 101;
     this->size = 0;
     this->table = new HashNode[this->capacity];
@@ -40,17 +40,17 @@ inline HashTable::HashTable(int capacity){
         this->table[i].state = EMPTY; // Đánh dấu tất cả ô là trống
     }
 }
-inline HashTable::~HashTable(){
+HashTable::~HashTable(){
     delete[] this->table;
     this->table = nullptr; // tránh tình trạng con trỏ lạc
 }
-inline bool HashTable::isEmpty() const{
+bool HashTable::isEmpty() const{
     return this->size == 0;
 }
-inline int HashTable::getSize() const{
+int HashTable::getSize() const{
     return this->size;
 }
-inline bool HashTable::insert(int key, int value){
+bool HashTable::insert(int key, int value){
     if (this->size >= this->capacity){
         std::cout << "Bang bam da day" << std::endl;
         return false;
@@ -86,7 +86,7 @@ inline bool HashTable::insert(int key, int value){
     }
     return false; // Không có EMPTY và DELETED => OCCUPIED => Không thể thêm
 }
-inline bool HashTable::search(int key, int& outValue) const{ // Tìm key và lấy value ra
+bool HashTable::search(int key, int& outValue) const{ // Tìm key và lấy value ra
     int index = this->hashFunction(key);
     for (int i = 0; i < this->capacity; i++){
         int currentIndex = (index + i) % this->capacity;
@@ -100,7 +100,7 @@ inline bool HashTable::search(int key, int& outValue) const{ // Tìm key và l�
     }
     return false; // Không có EMPTY và DELETED => OCCUPIED => Không thể thêm
 }
-inline bool HashTable::remove(int key){
+bool HashTable::remove(int key){
     int index = this->hashFunction(key);
     for (int i = 0; i < this->capacity; i++){
         int currentIndex = (index + i) % this->capacity;
@@ -115,13 +115,13 @@ inline bool HashTable::remove(int key){
     }
     return false; // Không có EMPTY và DELETED => OCCUPIED => Không thể thêm
 }
-inline void HashTable::clear(){
+void HashTable::clear(){
     for (int i = 0; i < this->capacity; i++){
         this->table[i].state = EMPTY;
     }
     this->size = 0;
 }
-inline void HashTable::display() const{
+void HashTable::display() const{
     std::cout << "HashTable:" << std::endl;
     for (int i = 0; i < this->capacity; i++){
         if (this->table[i].state == OCCUPIED){
