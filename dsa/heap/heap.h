@@ -1,129 +1,85 @@
 #pragma once
-#include <iostream>
+#include <vector>
+using namespace std;
 
+template <typename T>
+bool defaultHigher(const T& a, const T& b);
+
+template <typename T>
 class MaxHeap{
     private:
-        int* data;
-        int capacity;
-        int size;
-        int parent(int i) const;
-        int leftChild(int i) const;
-        int rightChild(int i) const;
-        void heapifyUp(int index);
-        void heapifyDown(int index);
-        void swap(int& a, int& b);
-        void resize();
+        vector<T> data;
+        bool (*isHigher)(const T&, const T&);   // true nếu a ưu tiên hơn b
+        void siftUp(int i);
+        void siftDown(int i);
     public:
-        MaxHeap(int cap);
-        ~MaxHeap();
-        void insert(int value);
-        int extractMax();
-        int getMax() const;
+        MaxHeap(bool (*cmp)(const T&, const T&) = nullptr);
+        void push(const T& x);
+    T    pop();                    // chỉ gọi khi !empty()
+        const T& top() const;       // chỉ gọi khi !empty()
         bool empty() const;
-        bool isFull() const;
-        int getSize() const;
-        void display() const;
-        void clear();
+        int size() const;
 };
-MaxHeap::MaxHeap(int cap){
-    this->capacity = (cap > 0) ? cap : 10;
-    this->size = 0;
-    this->data = new int[this->capacity];
+
+template <typename T>
+bool defaultHigher(const T& a, const T& b){ 
+    return a > b; 
 }
-MaxHeap::~MaxHeap(){
-    delete[] this->data;
-    this->data = nullptr;
+
+template <typename T>
+MaxHeap<T>::MaxHeap(bool (*cmp)(const T&, const T&)){
+    isHigher = (cmp != nullptr) ? cmp : defaultHigher<T>;
 }
-int MaxHeap::parent(int i) const{
-    return (i - 1) / 2;
-}
-int MaxHeap::leftChild(int i) const{
-    return 2 * i + 1;
-}
-int MaxHeap::rightChild(int i) const{
-    return 2 * i + 2;
-}
-void MaxHeap::swap(int& a, int& b){
-    int temp = a;
-    a = b;
-    b = temp;
-}
-bool MaxHeap::empty() const{
-    return this->size == 0;
-}
-bool MaxHeap::isFull() const{
-    return this->size == this->capacity;
-}
-int MaxHeap::getSize() const{
-    return this->size;
-}
-void MaxHeap::resize(){
-    this->capacity *= 2;
-    int* newData = new int[this->capacity];
-    for (int i = 0; i < this->size; i++){ // Copy dữ liệu cũ
-        newData[i] = this->data[i];
-    }
-    delete[] this->data;
-    this->data = newData;
-}
-void MaxHeap::heapifyUp(int index){ //Sau khi thêm một phần tử, đưa phần tử đó lên trên nếu nó lớn hơn cha
-    while (index > 0 && this->data[parent(index)] < this->data[index]){
-        this->swap(this->data[parent(index)], this->data[index]);
-        index = parent(index);
+
+template <typename T>
+void MaxHeap<T>::siftUp(int i){
+    while (i > 0){
+        int p = (i - 1) / 2;
+        if (!isHigher(data[i], data[p])) break;
+        T tmp = data[i]; data[i] = data[p]; data[p] = tmp;
+        i = p;
     }
 }
-void MaxHeap::insert(int value){ 
-    if (this->isFull()){
-        this->resize(); // Tự động tăng dung lượng khi đầy
-    }
-    this->data[this->size] = value; // Thêm phần tử vào cuối heap
-    this->size++;
-    this->heapifyUp(this->size - 1);
-}
-void MaxHeap::heapifyDown(int index){
-    int largest = index; // node hiện tại lớn nhất
-    int left = this->leftChild(index);
-    int right = this->rightChild(index);
-    if (left < this->size && this->data[left] > this->data[largest]){
-        largest = left;
-    }
-    if (right < this->size && this->data[right] > this->data[largest]){
-        largest = right;
-    }
-    if (largest != index){
-        this->swap(this->data[index], this->data[largest]);
-        this->heapifyDown(largest); // tiếp tục kiểm tra ở vị trí mới
+
+template <typename T>
+void MaxHeap<T>::siftDown(int i){
+    int n = (int)data.size();
+    while (true){
+        int l = 2 * i + 1, r = 2 * i + 2, best = i;
+        if (l < n && isHigher(data[l], data[best])) best = l;
+        if (r < n && isHigher(data[r], data[best])) best = r;
+        if (best == i) break;
+        T tmp = data[i]; data[i] = data[best]; data[best] = tmp;
+        i = best;
     }
 }
-int MaxHeap::getMax() const{
-    if (this->empty()){
-        std::cout << "Heap rong" << std::endl;
-        return -1;
-    }
-    return this->data[0];
+
+template <typename T>
+void MaxHeap<T>::push(const T& x){
+    data.push_back(x);
+    siftUp((int)data.size() - 1);
 }
-int MaxHeap::extractMax(){ // Lấy và xóa phần tử lớn nhất
-    if (this->empty()){
-        std::cout << "Heap rong, khong the lay phan tu" << std::endl;
-        return -1;
-    }
-    int maxValue = this->data[0];
-    this->data[0] = this->data[this->size - 1]; // lấy phần tử cuối đưa lên đầu
-    this->size--;
-    this->heapifyDown(0);
-    return maxValue;
+
+template <typename T>
+T MaxHeap<T>::pop(){
+    T res = data[0];
+    data[0] = data[data.size() - 1];
+    data.pop_back();
+    if (!data.empty()) siftDown(0);
+    return res;
 }
-void MaxHeap::clear(){
-    this->size = 0;
+
+template <typename T>
+const T& MaxHeap<T>::top() const{ 
+    return data[0]; 
 }
-void MaxHeap::display() const{
-    if (this->empty()){
-        std::cout << "Heap rong" << std::endl;
-        return;
-    }
-    std::cout << "Max-Heap: ";
-    for (int i = 0; i < this->size; i++){
-        std::cout << this->data[i] << " ";
-    }
-    std::cout << "\n";
+
+template <typename T>
+bool MaxHeap<T>::empty() const{ 
+    return data.empty(); 
+}
+
+template <typename T>
+int MaxHeap<T>::size() const{ 
+    return (int)data.size(); 
 }
