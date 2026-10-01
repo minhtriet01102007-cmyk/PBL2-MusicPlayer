@@ -1,85 +1,62 @@
 #pragma once
-#include <iostream>
+#include <vector>
+using namespace std;
 
+template <typename T>
 class Queue{
     private:
-        int* data;
-        int capacity;
-        int front;
-        int rear;
-        int size;
+        vector<T> data;
+        int head;
+        int count;
+        void grow();
     public:
-        Queue(int cap);
-        ~Queue();
-        bool enqueue(int value);
-        bool dequeue();
-        int peek() const;
-        bool isEmpty() const;
-        bool isFull() const;
-        int getSize() const;
-        void clear();
-        void display() const;
+        Queue();
+        void enqueue(const T& x);
+        T dequeue();                // chỉ gọi khi !empty()
+        const T& front() const;     // chỉ gọi khi !empty()
+        bool empty() const;
+        int size() const;
 };
-Queue::Queue(int cap){
-    this->capacity = (cap > 0) ? cap : 10;
-    this->data = new int[this->capacity];
-    this->front = 0;
-    this->rear = -1;
-    this->size = 0;
+
+template <typename T>
+Queue<T>::Queue() : data(8), head(0), count(0){
 }
-Queue::~Queue(){
-    delete[] this->data;
-    this->data = nullptr;
+
+template <typename T>
+void Queue<T>::grow(){
+    int cap = (int)data.size();
+    vector<T> bigger(cap * 2);
+    for (int i = 0; i < count; i++) bigger[i] = data[(head + i) % cap];
+    data = bigger;
+    head = 0;
 }
-bool Queue::isEmpty() const{
-    return this->size == 0;
+
+template <typename T>
+void Queue<T>::enqueue(const T& x){
+    if (count == (int)data.size()) grow();
+    data[(head + count) % data.size()] = x;
+    count++;
 }
-bool Queue::isFull() const{
-    return this->size == this->capacity;
+
+template <typename T>
+T Queue<T>::dequeue(){
+    T res = data[head];
+    head = (head + 1) % data.size();
+    count--;
+    return res;
 }
-int Queue::getSize() const{
-    return this->size;
+
+template <typename T>
+const T& Queue<T>::front() const{ 
+    return data[head]; 
 }
-bool Queue::enqueue(int value){ //Thêm vào cuối 
-    if (this->isFull()){
-        std::cout << "Queue da day, khong the them\n";
-        return false;
-    }
-    this->rear = (this->rear + 1) % this->capacity;
-    this->data[this->rear] = value;
-    this->size++;
-    return true;
+
+template <typename T>
+bool Queue<T>::empty() const{ 
+    return count == 0; 
 }
-bool Queue::dequeue(){ //Lấy đầu
-    if (this->isEmpty()){
-        std::cout << "Queue rong, khong the lay phan tu\n";
-        return false;
-    }
-    this->front = (this->front + 1) % this->capacity;
-    this->size--;
-    return true;
-}
-int Queue::peek() const{ //xem phần tử đầu Queue nhưng k xóa nó
-    if (this->isEmpty()){
-        std::cout << "Queue rong\n";
-        return -1;
-    }
-    return this->data[this->front];
-}
-void Queue::clear(){
-    this->front = 0;
-    this->rear = -1;
-    this->size = 0;
-}
-void Queue::display() const{
-    if (this->isEmpty()){
-        std::cout << "Queue rong\n";
-        return;
-    }
-    std::cout << "Queue: ";
-    for (int i = 0; i < this->size; i++){
-        int index = (this->front + i) % this->capacity;
-        std::cout << this->data[index] << " ";
-    }
-    std::cout << "\n";
+
+template <typename T>
+int Queue<T>::size() const{ 
+    return count; 
 }
