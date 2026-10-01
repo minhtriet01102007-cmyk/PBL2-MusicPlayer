@@ -1,20 +1,23 @@
 #include "../include/artist.h"
 #include <iostream>
 
-Artist::Artist() : id_artist(""), name_artist(""), bio(""), country(""), followers(0)
-{}
-Artist::Artist(std::string id_artist, std::string name_artist, std::string bio,
-               std::string country, long long followers)
-    : id_artist(id_artist), name_artist(name_artist), bio(bio), country(country), followers(followers)
-{}
+Artist::Artist(){
+    this->id_artist = "";
+    this->name_artist = "";
+    this->country = "";
+    this->followers = 0;
+}
+Artist::Artist(std::string id_artist, std::string name_artist, std::string country, long long followers){
+    this->id_artist = id_artist;
+    this->name_artist = name_artist;
+    this->country = country;
+    this->followers = followers;
+}
 std::string Artist::getIdArtist() const{
     return this->id_artist;
 }
 std::string Artist::getNameArtist() const{
     return this->name_artist;
-}
-std::string Artist::getBio() const{
-    return this->bio;
 }
 std::string Artist::getCountry() const{
     return this->country;
@@ -28,9 +31,6 @@ void Artist::setIdArtist(std::string id_artist){
 void Artist::setNameArtist(std::string name_artist){
     this->name_artist = name_artist;
 }
-void Artist::setBio(std::string bio){
-    this->bio = bio;
-}
 void Artist::setCountry(std::string country){
     this->country = country;
 }
@@ -38,9 +38,8 @@ void Artist::setFollowers(long long followers){
     this->followers = followers;
 }
 void Artist::show() const{
-    std::cout << "ID Artist: " << id_artist << "\n";
-    std::cout << "Ten nghe si: " << name_artist << "\n";
-    std::cout << "Tieu su: " << bio << "\n";
-    std::cout << "Quoc gia: " << country << "\n";
-    std::cout << "Followers: " << followers << "\n";
+    std::cout << "Artist ID: " << this->id_artist << '\n';
+    std::cout << "Artist: " << this->name_artist << '\n';
+    std::cout << "Country: " << this->country << '\n';
+    std::cout << "Followers: " << this->followers << '\n';
 }
