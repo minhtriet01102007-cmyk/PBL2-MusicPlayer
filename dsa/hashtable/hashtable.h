@@ -1,123 +1,110 @@
 #pragma once
-#include <iostream>
 #include "hashtablenode.h"
+#include <vector>
+#include <string>
+using namespace std;
 
+inline int hashKey(int k){ 
+    return k < 0 ? -k : k; 
+}
+inline int hashKey(const std::string& s){
+    unsigned int h = 5381;
+    for (int i = 0; i < (int)s.size(); i++)
+        h = h * 31 + (unsigned char)s[i];
+    return (int)(h & 0x7FFFFFFF);
+}
+template <typename K, typename V>
 class HashTable{
     private:
-        HashNode* table;
+        vector<vector<HashEntry<K, V>>> buckets;
         int capacity;
-        int size;
-        int hashFunction(int key) const; // Biến key thành index của mảng
+        int count;
+        int indexOf(const K& k) const;
+        void rehash();
     public:
-        HashTable(int capacity);
-        ~HashTable();
-        bool insert(int key, int value);
-        bool search(int key, int& outValue) const;
-        bool remove(int key);
-        bool isEmpty() const;
-        int getSize() const;
-        void display() const;
-        void clear();
+        HashTable(int cap = 101);
+        bool insert(const K& k, const V& v);   // true nếu thêm mới, false nếu cập nhật
+        V* find(const K& k);                   // nullptr nếu không có
+        bool remove(const K& k);
+        int size() const;
+        void forEach(void (*visit)(const K&, V&));
 };
-int HashTable::hashFunction(int key) const{
-    int hash = key % this->capacity;
-    return (hash < 0) ? (hash + this->capacity) : hash;
+
+template <typename K, typename V>
+HashTable<K, V>::HashTable(int cap) : buckets(cap), capacity(cap), count(0){
 }
-HashTable::HashTable(int capacity){
-    this->capacity = (capacity > 0) ? capacity : 101;
-    this->size = 0;
-    this->table = new HashNode[this->capacity];
-    for (int i = 0; i < this->capacity; i++){
-        this->table[i].state = EMPTY; // Đánh dấu tất cả ô là trống
-    }
+
+template <typename K, typename V>
+int HashTable<K, V>::indexOf(const K& k) const{
+    return hashKey(k) % capacity;
 }
-HashTable::~HashTable(){
-    delete[] this->table;
-    this->table = nullptr; // tránh tình trạng con trỏ lạc
-}
-bool HashTable::isEmpty() const{
-    return this->size == 0;
-}
-int HashTable::getSize() const{
-    return this->size;
-}
-bool HashTable::insert(int key, int value){
-    if (this->size >= this->capacity){
-        std::cout << "Bang bam da day" << std::endl;
-        return false;
-    }
-    int index = this->hashFunction(key);
-    int firstDeletedIndex = -1; // Biến này dùng để ghi nhớ ô DELETED đầu tiên gặp được, Chưa tìm thấy ô DELETED nào
-    for (int i = 0; i < this->capacity; i++){
-        int currentIndex = (index + i) % this->capacity; // Linear Probing: Dò tuyến tính
-        if (this->table[currentIndex].state == OCCUPIED){
-            if (this->table[currentIndex].key == key){
-                this->table[currentIndex].value = value; // Cập nhật giá trị nếu trùng key
-                return true;
-            }
-        } else if (this->table[currentIndex].state == DELETED){
-            if (firstDeletedIndex == -1){
-                firstDeletedIndex = currentIndex; // Lưu lại vị trí DELETED đầu tiên
-            }
-        } else{ // EMPTY
-            int insertIndex = (firstDeletedIndex != -1) ? firstDeletedIndex : currentIndex;
-            this->table[insertIndex].key = key;
-            this->table[insertIndex].value = value;
-            this->table[insertIndex].state = OCCUPIED;
-            this->size++;
-            return true;
+
+template <typename K, typename V>
+void HashTable<K, V>::rehash(){
+    int newCap = capacity * 2 + 1;
+    vector<vector<HashEntry<K, V>>> newBuckets(newCap);
+    for (int i = 0; i < capacity; i++){
+        for (int j = 0; j < (int)buckets[i].size(); j++){
+            int idx = hashKey(buckets[i][j].key) % newCap;
+            newBuckets[idx].push_back(buckets[i][j]);
         }
     }
-    if (firstDeletedIndex != -1){
-        this->table[firstDeletedIndex].key = key;
-        this->table[firstDeletedIndex].value = value;
-        this->table[firstDeletedIndex].state = OCCUPIED;
-        this->size++;
-        return true;
-    }
-    return false; // Không có EMPTY và DELETED => OCCUPIED => Không thể thêm
+    buckets = newBuckets;
+    capacity = newCap;
 }
-bool HashTable::search(int key, int& outValue) const{ // Tìm key và lấy value ra
-    int index = this->hashFunction(key);
-    for (int i = 0; i < this->capacity; i++){
-        int currentIndex = (index + i) % this->capacity;
-        if (this->table[currentIndex].state == EMPTY){
+
+template <typename K, typename V>
+bool HashTable<K, V>::insert(const K& k, const V& v){
+    int idx = indexOf(k);
+    for (int j = 0; j < (int)buckets[idx].size(); j++){
+        if (buckets[idx][j].key == k){
+            buckets[idx][j].value = v;
             return false;
         }
-        if (this->table[currentIndex].state == OCCUPIED && this->table[currentIndex].key == key){
-            outValue = this->table[currentIndex].value;
+    }
+    if (count + 1 > capacity * 3 / 4){
+        rehash();
+        idx = indexOf(k);
+    }
+    HashEntry<K, V> e;
+    e.key = k;
+    e.value = v;
+    buckets[idx].push_back(e);
+    count++;
+    return true;
+}
+
+template <typename K, typename V>
+V* HashTable<K, V>::find(const K& k){
+    int idx = indexOf(k);
+    for (int j = 0; j < (int)buckets[idx].size(); j++){
+        if (buckets[idx][j].key == k) return &buckets[idx][j].value;
+    }
+    return nullptr;
+}
+
+template <typename K, typename V>
+bool HashTable<K, V>::remove(const K& k){
+    int idx = indexOf(k);
+    for (int j = 0; j < (int)buckets[idx].size(); j++){
+        if (buckets[idx][j].key == k) {
+            buckets[idx][j] = buckets[idx][buckets[idx].size() - 1];
+            buckets[idx].pop_back();
+            count--;
             return true;
         }
     }
-    return false; // Không có EMPTY và DELETED => OCCUPIED => Không thể thêm
+    return false;
 }
-bool HashTable::remove(int key){
-    int index = this->hashFunction(key);
-    for (int i = 0; i < this->capacity; i++){
-        int currentIndex = (index + i) % this->capacity;
-        if (this->table[currentIndex].state == EMPTY){
-            return false;
-        }
-        if (this->table[currentIndex].state == OCCUPIED && this->table[currentIndex].key == key){
-            this->table[currentIndex].state = DELETED;
-            this->size--;
-            return true;
-        }
-    }
-    return false; // Không có EMPTY và DELETED => OCCUPIED => Không thể thêm
+
+template <typename K, typename V>
+int HashTable<K, V>::size() const{ 
+    return count; 
 }
-void HashTable::clear(){
-    for (int i = 0; i < this->capacity; i++){
-        this->table[i].state = EMPTY;
-    }
-    this->size = 0;
-}
-void HashTable::display() const{
-    std::cout << "HashTable:" << std::endl;
-    for (int i = 0; i < this->capacity; i++){
-        if (this->table[i].state == OCCUPIED){
-            std::cout << "  [" << i << "] Key: " << this->table[i].key
-                      << " => Value: " << this->table[i].value << std::endl;
-        }
-    }
+
+template <typename K, typename V>
+void HashTable<K, V>::forEach(void (*visit)(const K&, V&)){
+    for (int i = 0; i < capacity; i++)
+        for (int j = 0; j < (int)buckets[i].size(); j++)
+            visit(buckets[i][j].key, buckets[i][j].value);
 }
