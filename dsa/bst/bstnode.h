@@ -1,7 +1,10 @@
 #pragma once
 
+template <typename K, typename V>
 struct BSTNode{
-    int data;
+    K key;
+    V value;
     BSTNode* left;
     BSTNode* right;
+    BSTNode(const K& k, const V& v);
 };
