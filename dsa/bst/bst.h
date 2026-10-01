@@ -1,138 +1,72 @@
 #pragma once
 #include "bstnode.h"
-#include <iostream>
 
+template <typename K, typename V>
 class BST{
     private:
-        BSTNode* root; // node gốc
-        int size;
-        BSTNode* insertHelper(BSTNode* node, int value);
-        BSTNode* removeHelper(BSTNode* node, int value);
-        bool searchHelper(BSTNode* node, int value) const;
-        void inorderHelper(BSTNode* node) const;
-        void clearHelper(BSTNode* node);
-        BSTNode* findMin(BSTNode* node) const;
+        BSTNode<K, V>* root;
+        BSTNode<K, V>* insertNode(BSTNode<K, V>* node, const K& k, const V& v);
+        void inOrderNode(BSTNode<K, V>* node, void (*visit)(const K&, V&));
+        void destroy(BSTNode<K, V>* node);
     public:
         BST();
         ~BST();
-        void insert(int value);
-        void remove(int value);
-        bool search(int value) const;
-        void inorder() const; // Duyệt cây in ra thứ tự tăng dần
-        bool IsEmpty() const;
-        int getSize() const;
-        void clear();
+        void insert(const K& k, const V& v);
+        V* find(const K& k);
+        void inOrder(void (*visit)(const K&, V&));
 };
-BST::BST(){
-    this->root = nullptr;
-    this->size = 0;
+
+template <typename K, typename V>
+BST<K, V>::BST() : root(nullptr){
 }
-BST::~BST(){
-    this->clear();
+
+template <typename K, typename V>
+BST<K, V>::~BST(){ 
+    destroy(root); 
 }
-bool BST::IsEmpty() const{
-    return this->root == nullptr;
+
+template <typename K, typename V>
+void BST<K, V>::destroy(BSTNode<K, V>* node){
+    if (node == nullptr) return;
+    destroy(node->left);
+    destroy(node->right);
+    delete node;
 }
-int BST::getSize() const{
-    return this->size;
-}
-BSTNode* BST::findMin(BSTNode* node) const{ // Tìm node nhỏ nhất  
-    while (node->left != nullptr){
-        node = node->left;
-    }
+
+template <typename K, typename V>
+BSTNode<K, V>* BST<K, V>::insertNode(BSTNode<K, V>* node, const K& k, const V& v){
+    if (node == nullptr) return new BSTNode<K, V>(k, v);
+    if (k < node->key) node->left = insertNode(node->left, k, v);
+    else if (node->key < k) node->right = insertNode(node->right, k, v);
+    else node->value = v;   // trùng khóa thì cập nhật giá trị
     return node;
 }
-BSTNode* BST::insertHelper(BSTNode* node, int value){ // Đệ quy tìm vị trí thích hợp rồi chèn node mới
-    if (node == nullptr){ // Vị trí trống
-        BSTNode* newNode = new BSTNode;
-        newNode->data = value;
-        newNode->left = nullptr;
-        newNode->right = nullptr;
-        this->size++;
-        return newNode;
-    }
-    if (value < node->data){
-        node->left = insertHelper(node->left, value);
-    } else if (value > node->data){
-        node->right = insertHelper(node->right, value);
-    }
-    return node;
+
+template <typename K, typename V>
+void BST<K, V>::insert(const K& k, const V& v){ 
+    root = insertNode(root, k, v); 
 }
-void BST::insert(int value){
-    this->root = insertHelper(this->root, value);
-}
-bool BST::searchHelper(BSTNode* node, int value) const{ // Tìm xem value có trong cây không
-    if (node == nullptr){
-        return false;
+
+template <typename K, typename V>
+V* BST<K, V>::find(const K& k){
+    BSTNode<K, V>* cur = root;
+    while (cur != nullptr){
+        if (k < cur->key) cur = cur->left;
+        else if (cur->key < k) cur = cur->right;
+        else return &cur->value;
     }
-    if (node->data == value){
-        return true;
-    }
-    if (value < node->data){
-        return searchHelper(node->left, value);
-    }
-    return searchHelper(node->right, value);
+    return nullptr;
 }
-bool BST::search(int value) const{
-    return searchHelper(this->root, value);
+
+template <typename K, typename V>
+void BST<K, V>::inOrderNode(BSTNode<K, V>* node, void (*visit)(const K&, V&)){
+    if (node == nullptr) return;
+    inOrderNode(node->left, visit);
+    visit(node->key, node->value);
+    inOrderNode(node->right, visit);
 }
-BSTNode* BST::removeHelper(BSTNode* node, int value){
-    if (node == nullptr){
-        return nullptr;
-    }
-    if (value < node->data){
-        node->left = removeHelper(node->left, value);
-    } else if (value > node->data){
-        node->right = removeHelper(node->right, value);
-    } else { // trường hợp value = node->data
-        if (node->left == nullptr){ // node không có con trái
-            BSTNode* temp = node->right;
-            delete node;
-            this->size--;
-            return temp;
-        }
-        else if (node->right == nullptr){ // node không có con phải
-            BSTNode* temp = node->left;
-            delete node;
-            this->size--;
-            return temp;
-        }
-        else if (node->left != nullptr && node->right != nullptr){ // node có cả 2 con
-            BSTNode* temp = findMin(node->right);
-            node->data = temp->data;
-            node->right = removeHelper(node->right, temp->data);
-        }
-    }
-    return node;
-}
-void BST::remove(int value){
-    this->root = removeHelper(this->root, value);
-}
-void BST::inorderHelper(BSTNode* node) const{
-    if (node != nullptr){
-        inorderHelper(node->left);
-        std::cout << node->data << " ";
-        inorderHelper(node->right);
-    }
-}
-void BST::inorder() const{
-    if (IsEmpty()){
-        std::cout << "Cay BST dang rong" << std::endl;
-        return;
-    }
-    std::cout << "Inorder Traversal: ";
-    inorderHelper(this->root);
-    std::cout << std::endl;
-}
-void BST::clearHelper(BSTNode* node){
-    if (node != nullptr){
-        clearHelper(node->left);
-        clearHelper(node->right);
-        delete node;
-    }
-}
-void BST::clear(){
-    clearHelper(this->root);
-    this->root = nullptr;
-    this->size = 0;
+
+template <typename K, typename V>
+void BST<K, V>::inOrder(void (*visit)(const K&, V&)){
+    inOrderNode(root, visit); 
 }
