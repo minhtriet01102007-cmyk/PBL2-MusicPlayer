@@ -1,20 +1,27 @@
 #pragma once
 #include <string>
-using namespace std;
 
 class User{
     protected:
-        string id_user;
-        string name_user;
-        string password;
-        string email;
-        string phone_number;
+        std::string id_user;
+        std::string username;
+        std::string email;
+        std::string phone_number;
+        std::string password;
     public:
-        User(string id_user, string name_user, string password, string email, string phone_number);
-        User(const User& u);
+        User();
+        User(std::string id_user, std::string username, std::string email, std::string phone_number, std::string password);
+        User(const User& user);
         virtual ~User();
-        virtual bool checkPassword(string password) const;
-        virtual bool checkEmail(string email) const;
-        virtual bool checkPhone(string phone_number) const;
-        virtual void show() const;
+        std::string getIdUser() const;
+        std::string getUsername() const;
+        std::string getEmail() const;
+        std::string getPhonenumber() const;
+        std::string getPassword() const;
+        void setIdUser(std::string id_user);
+        void setUsername(std::string username);
+        void setEmail(std::string email);
+        void setPhonenumber(std::string phone_number);
+        void setPassword(std::string password);
+        virtual void display() const;
 };
