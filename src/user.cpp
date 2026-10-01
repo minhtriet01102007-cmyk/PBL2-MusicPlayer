@@ -1,63 +1,80 @@
 #include "../include/user.h"
-#include <string>
+#include <iostream>
 
-User::User()
-    : id_user(""), name_user(""), password(""), email(""), phone_number(""),
-      display_name(""), avatar(""), is_active(true)
-{}
-User::User(std::string id_user, std::string name_user, std::string password,
-           std::string email, std::string phone_number, std::string display_name,
-           std::string avatar, bool is_active)
-    : id_user(id_user), name_user(name_user), password(password), email(email),
-      phone_number(phone_number), display_name(display_name), avatar(avatar), is_active(is_active)
-{}
-User::~User()
-{}
+User::User(){
+    this->id_user = "";
+    this->username = "";
+    this->email = "";
+    this->phone_number = "";
+    this->password = "";
+}
+
+User::User(std::string id_user,
+           std::string username,
+           std::string email,
+           std::string phone_number,
+           std::string password){
+    this->id_user = id_user;
+    this->username = username;
+    this->email = email;
+    this->phone_number = phone_number;
+    this->password = password;
+}
+
+User::User(const User& user){
+    this->id_user = user.id_user;
+    this->username = user.username;
+    this->email = user.email;
+    this->phone_number = user.phone_number;
+    this->password = user.password;
+}
+
+User::~User(){
+}
+
 std::string User::getIdUser() const{
     return this->id_user;
 }
-std::string User::getNameuser() const{
-    return this->name_user;
+
+std::string User::getUsername() const{
+    return this->username;
 }
+
 std::string User::getEmail() const{
     return this->email;
 }
-std::string User::getPhoneNumber() const{
+
+std::string User::getPhonenumber() const{
     return this->phone_number;
 }
-std::string User::getDisplayName() const{
-    return this->display_name;
+
+std::string User::getPassword() const{
+    return this->password;
 }
-std::string User::getAvatar() const{
-    return this->avatar;
-}
-bool User::getIsActive() const{
-    return this->is_active;
-}
-void User::setIdname(std::string id_user){
+
+void User::setIdUser(std::string id_user){
     this->id_user = id_user;
 }
-void User::setUsername(std::string name_user){
-    this->name_user = name_user;
+
+void User::setUsername(std::string username){
+    this->username = username;
 }
-void User::setPassword(std::string password){
-    this->password = password;
-}
+
 void User::setEmail(std::string email){
     this->email = email;
 }
-void User::setPhoneNumber(std::string phone_number){
+
+void User::setPhonenumber(std::string phone_number){
     this->phone_number = phone_number;
 }
-void User::setDisplayName(std::string display_name){
-    this->display_name = display_name;
+
+void User::setPassword(std::string password){
+    this->password = password;
 }
-void User::setAvatar(std::string avatar){
-    this->avatar = avatar;
-}
-void User::setIsActive(bool is_active){
-    this->is_active = is_active;
-}
-bool User::checkPassword(std::string password) const{
-    return this->password == password;
+
+void User::display() const{
+    std::cout << "User ID: " << this->id_user << '\n';
+    std::cout << "Username: " << this->username << '\n';
+    std::cout << "Email: " << this->email << '\n';
+    std::cout << "Phone number: " << this->phone_number << '\n';
 }
