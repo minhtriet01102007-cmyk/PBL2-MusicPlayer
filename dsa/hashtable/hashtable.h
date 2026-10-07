@@ -1,110 +1,117 @@
 #pragma once
-#include "hashtablenode.h"
-#include <vector>
 #include <string>
-using namespace std;
 
-inline int hashKey(int k){ 
-    return k < 0 ? -k : k; 
-}
-inline int hashKey(const std::string& s){
-    unsigned int h = 5381;
-    for (int i = 0; i < (int)s.size(); i++)
-        h = h * 31 + (unsigned char)s[i];
-    return (int)(h & 0x7FFFFFFF);
-}
 template <typename K, typename V>
 class HashTable{
     private:
-        vector<vector<HashEntry<K, V>>> buckets;
-        int capacity;
+        static const int TABLE_SIZE = 101; 
+        HashNode<K, V>* table[TABLE_SIZE]; 
         int count;
-        int indexOf(const K& k) const;
-        void rehash();
+        int hashFunction(const std::string& key) const;
     public:
-        HashTable(int cap = 101);
-        bool insert(const K& k, const V& v);   // true nếu thêm mới, false nếu cập nhật
-        V* find(const K& k);                   // nullptr nếu không có
-        bool remove(const K& k);
-        int size() const;
-        void forEach(void (*visit)(const K&, V&));
+        HashTable();
+        ~HashTable();
+        void insert(const K& key, const V& value);
+        bool search(const K& key, V& outValue) const;
+        bool remove(const K& key);
+        int getCount() const;
+        bool isEmpty() const;
+        void clear();
 };
 
 template <typename K, typename V>
-HashTable<K, V>::HashTable(int cap) : buckets(cap), capacity(cap), count(0){
+HashTable<K, V>::HashTable(){
+    this->count = 0;
+    for (int i = 0; i < TABLE_SIZE; i++){
+        this->table[i] = nullptr;
+    }
 }
 
 template <typename K, typename V>
-int HashTable<K, V>::indexOf(const K& k) const{
-    return hashKey(k) % capacity;
+HashTable<K, V>::~HashTable(){
+    this->clear();
 }
 
 template <typename K, typename V>
-void HashTable<K, V>::rehash(){
-    int newCap = capacity * 2 + 1;
-    vector<vector<HashEntry<K, V>>> newBuckets(newCap);
-    for (int i = 0; i < capacity; i++){
-        for (int j = 0; j < (int)buckets[i].size(); j++){
-            int idx = hashKey(buckets[i][j].key) % newCap;
-            newBuckets[idx].push_back(buckets[i][j]);
+int HashTable<K, V>::hashFunction(const std::string& key) const{
+    int sum = 0;
+    for (char c : key) sum = (sum * 31 + c) % TABLE_SIZE; // Nhân 31 giúp phân tán chuỗi đều hơn
+    return (sum < 0) ? (sum + TABLE_SIZE) : sum;
+}
+
+template <typename K, typename V>
+void HashTable<K, V>::insert(const K& key, const V& value){
+    int index = this->hashFunction(key);
+    HashNode<K, V>* curr = this->table[index];
+    while (curr != nullptr){
+        if (curr->key == key){
+            curr->value = value;
+            return;
         }
+        curr = curr->next;
     }
-    buckets = newBuckets;
-    capacity = newCap;
+    HashNode<K, V>* newNode = new HashNode<K, V>(key, value);
+    newNode->next = this->table[index];
+    this->table[index] = newNode;
+    this->count++;
 }
 
 template <typename K, typename V>
-bool HashTable<K, V>::insert(const K& k, const V& v){
-    int idx = indexOf(k);
-    for (int j = 0; j < (int)buckets[idx].size(); j++){
-        if (buckets[idx][j].key == k){
-            buckets[idx][j].value = v;
-            return false;
-        }
-    }
-    if (count + 1 > capacity * 3 / 4){
-        rehash();
-        idx = indexOf(k);
-    }
-    HashEntry<K, V> e;
-    e.key = k;
-    e.value = v;
-    buckets[idx].push_back(e);
-    count++;
-    return true;
-}
-
-template <typename K, typename V>
-V* HashTable<K, V>::find(const K& k){
-    int idx = indexOf(k);
-    for (int j = 0; j < (int)buckets[idx].size(); j++){
-        if (buckets[idx][j].key == k) return &buckets[idx][j].value;
-    }
-    return nullptr;
-}
-
-template <typename K, typename V>
-bool HashTable<K, V>::remove(const K& k){
-    int idx = indexOf(k);
-    for (int j = 0; j < (int)buckets[idx].size(); j++){
-        if (buckets[idx][j].key == k) {
-            buckets[idx][j] = buckets[idx][buckets[idx].size() - 1];
-            buckets[idx].pop_back();
-            count--;
+bool HashTable<K, V>::search(const K& key, V& outValue) const{
+    int index = this->hashFunction(key);
+    HashNode<K, V>* curr = this->table[index];
+    while (curr != nullptr){
+        if (curr->key == key){
+            outValue = curr->value;
             return true;
         }
+        curr = curr->next;
+    }
+    return false; // Không tìm thấy
+}
+
+template <typename K, typename V>
+bool HashTable<K, V>::remove(const K& key){
+    int index = this->hashFunction(key);
+    HashNode<K, V>* curr = this->table[index];
+    HashNode<K, V>* prev = nullptr;
+    while (curr != nullptr){
+        if (curr->key == key){
+            if (prev == nullptr){
+                this->table[index] = curr->next;
+            } else{
+                prev->next = curr->next;
+            }
+            delete curr;
+            this->count--;
+            return true;
+        }
+        prev = curr;
+        curr = curr->next;
     }
     return false;
 }
 
 template <typename K, typename V>
-int HashTable<K, V>::size() const{ 
-    return count; 
+int HashTable<K, V>::getCount() const{
+    return this->count;
 }
 
 template <typename K, typename V>
-void HashTable<K, V>::forEach(void (*visit)(const K&, V&)){
-    for (int i = 0; i < capacity; i++)
-        for (int j = 0; j < (int)buckets[i].size(); j++)
-            visit(buckets[i][j].key, buckets[i][j].value);
+bool HashTable<K, V>::isEmpty() const{
+    return this->count == 0;
+}
+
+template <typename K, typename V>
+void HashTable<K, V>::clear(){
+    for (int i = 0; i < TABLE_SIZE; i++){
+        HashNode<K, V>* curr = this->table[i];
+        while (curr != nullptr){
+            HashNode<K, V>* temp = curr;
+            curr = curr->next;
+            delete temp;
+        }
+        this->table[i] = nullptr;
+    }
+    this->count = 0;
 }
