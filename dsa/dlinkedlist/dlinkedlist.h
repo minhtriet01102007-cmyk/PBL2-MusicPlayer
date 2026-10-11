@@ -1,5 +1,7 @@
 #pragma once
 #include <iostream>
+#include <stdexcept>
+#include "dnode.h"
 
 template <typename T>
 class DoublyLinkedList{
