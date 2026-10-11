@@ -67,7 +67,7 @@ bool DoublyLinkedList<T>::remove(const T& val){
 
 template <typename T>
 T DoublyLinkedList<T>::getCurrent() const{
-        if (this->current == nullptr) throw std::runtime_error("Playback queue rong");
+        if (this->current == nullptr) throw std::runtime_error("Rong");
         else return this->current->data;
 }
 
