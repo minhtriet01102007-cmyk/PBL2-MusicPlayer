@@ -54,7 +54,7 @@ bool DoublyLinkedList<T>::remove(const T& val){
                 if (curr->prev != nullptr) curr->prev->next = curr->next;
                 if (curr->next != nullptr) curr->next->prev = curr->prev;
                 if (this->current == curr){
-                    this->current = (curr->next != nullptr) ? curr->next : this->head;
+                    this->current = (curr->next != nullptr) ? curr->next : nullptr;
                 }
                 delete curr;
                 this->size--;
