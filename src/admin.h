@@ -8,7 +8,8 @@ class Admin : public User{
         std::string role;
     public:
         Admin();
-        Admin(std::string id_user, std::string username, std::string email, std::string password, std::string role = "SUPER_ADMIN");
+        Admin(const std::string& id_user, const std::string& username, const std::string& email, 
+              const std::string& password, const std::string& role);
         Admin(const Admin& other);
         ~Admin() override;
         std::string getRole() const;
@@ -18,8 +19,8 @@ class Admin : public User{
 inline Admin::Admin() : User(){
     this->role = "ADMIN";
 }
-inline Admin::Admin(std::string id_user, std::string username, std::string email, std::string password, std::string role)
-    : User(id_user, username, email, password){
+inline Admin::Admin(const std::string& id_user, const std::string& username, const std::string& email, 
+              const std::string& password, const std::string& role) : User(id_user, username, email, password){
     this->role = role;
 }
 inline Admin::Admin(const Admin& other) : User(other){

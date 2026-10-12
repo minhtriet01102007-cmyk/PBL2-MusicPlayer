@@ -15,8 +15,8 @@ class Song{
         std::string file_path;  // Đường dẫn file nhạc (.mp3 / .wav)
     public:
         Song();
-        Song(std::string id_song, std::string name, std::string artist, std::string album, std::string type, 
-             int duration, std::string date_release, std::string file_path, int count_playsong = 0);
+        Song(const std::string& id_song, const std::string& name, const std::string& artist, const std::string& album, const std::string& type, 
+             const int& duration, const std::string& date_release, const std::string& file_path, const int& count_playsong = 0);
         std::string getIdSong() const;
         std::string getName() const;
         std::string getArtist() const;
@@ -51,8 +51,8 @@ inline Song::Song(){
     this->file_path = "";
     this->count_playsong = 0;
 }
-inline Song::Song(std::string id_song, std::string name, std::string artist, std::string album, std::string type, 
-                  int duration, std::string date_release, std::string file_path, int count_playsong){
+inline Song:: Song(const std::string& id_song, const std::string& name, const std::string& artist, const std::string& album, const std::string& type, 
+             const int& duration, const std::string& date_release, const std::string& file_path, const int& count_playsong = 0){
     this->id_song = id_song;
     this->name = name;
     this->artist = artist;

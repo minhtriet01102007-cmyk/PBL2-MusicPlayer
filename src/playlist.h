@@ -12,7 +12,7 @@ class Playlist{
         DoublyLinkedList<Song*> songs; 
     public:
         Playlist();
-        Playlist(std::string id_playlist, std::string name_playlist, std::string id_user);
+        Playlist(const std::string& id_playlist, const std::string& name_playlist, const std::string& id_user);
         std::string getIdPlaylist() const;
         std::string getNamePlaylist() const;
         std::string getIdUser() const;
@@ -22,7 +22,7 @@ class Playlist{
         void setIdUser(const std::string& id_user);
         void addSong(Song* song);
         bool removeSong(Song* song);
-        DoublyLinkedList<Song*>& getQueue();
+        DoublyLinkedList<Song*>& getQueue(); //Việc trả về tham chiếu cho phép bên ngoài có thể thao tác trực tiếp trên danh sách bài hát của playlist mà không tạo bản sao.
         void display() const;
 };
 
@@ -31,7 +31,7 @@ inline Playlist::Playlist(){
     this->name_playlist = "";
     this->id_user = "";
 }
-inline Playlist::Playlist(std::string id_playlist, std::string name_playlist, std::string id_user){
+inline Playlist:: Playlist(const std::string& id_playlist, const std::string& name_playlist, const std::string& id_user){
     this->id_playlist = id_playlist;
     this->name_playlist = name_playlist;
     this->id_user = id_user;

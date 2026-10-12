@@ -7,15 +7,15 @@
 
 class Listener : public User{
     private:
-        int total_songs_played;
-        std::vector<Playlist> playlists;
+        int total_songs_played; //tổng số bài hát người nghe đã phát
+        std::vector<Playlist> playlists; //lưu nhiều đối tượng Playlist của một người nghe
     public:
         Listener();
-        Listener(std::string id_user, std::string username, std::string email, std::string password);
+        Listener(const std::string& id_user, const std::string& username, const std::string& email, const std::string& password);
         Listener(const Listener& other);
         ~Listener() override;
-        int getTotalSongsPlayed() const;
-        int getPlaylistCount() const;
+        int getTotalSongsPlayed() const; //Trả về tổng số bài hát người đó đã phát
+        int getPlaylistCount() const; // Trả về số lượng playlist của người nghe
         const std::vector<Playlist>& getPlaylists() const;
         void setTotalSongsPlayed(int total_songs_played);
         void increasePlayedCount();
@@ -27,7 +27,7 @@ class Listener : public User{
 inline Listener::Listener() : User(){
     this->total_songs_played = 0;
 }
-inline Listener::Listener(std::string id_user, std::string username, std::string email, std::string password)
+inline Listener::Listener(const std::string& id_user, const std::string& username, const std::string& email, const std::string& password)
     : User(id_user, username, email, password){
     this->total_songs_played = 0;
 }
@@ -65,7 +65,7 @@ inline bool Listener::removePlaylist(const std::string& id_playlist){
 }
 inline Playlist* Listener::getPlaylistById(const std::string& id_playlist){
     for (auto& pl : this->playlists){
-        if (pl.getIdPlaylist() == id_playlist) return &pl;
+        if (pl.getIdPlaylist() == id_playlist) return &pl; // trả về địa chỉ
     }
     return nullptr;
 }

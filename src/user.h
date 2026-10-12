@@ -10,7 +10,7 @@ class User{
         std::string password;
     public:
         User();
-        User(std::string id_user, std::string username, std::string email, std::string password);
+        User(const std::string& id_user, const std::string& username, const std::string& email, const std::string& password);
         virtual ~User();
         std::string getIdUser() const;
         std::string getUsername() const;
@@ -20,7 +20,7 @@ class User{
         void setUsername(const std::string& username);
         void setEmail(const std::string& email);
         void setPassword(const std::string& password);
-        virtual void display() const = 0; 
+        virtual void display() const; 
 };
 inline User::User(){
     this->id_user = "";
@@ -28,7 +28,7 @@ inline User::User(){
     this->email = "";
     this->password = "";
 }
-inline User::User(std::string id_user, std::string username, std::string email, std::string password){
+inline User::User(const std::string& id_user, const std::string& username, const std::string& email, const std::string& password){
     this->id_user = id_user;
     this->username = username;
     this->email = email;

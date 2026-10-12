@@ -10,7 +10,7 @@ class Album{
         std::string date_release;
     public:
         Album();
-        Album(std::string id_album, std::string name_album, std::string artist, std::string date_release);
+        Album(const std::string& id_album, const std::string& name_album, const std::string& artist, const std::string& date_release);
         Album(const Album& other);
         ~Album();
         std::string getIdAlbum() const;
@@ -29,7 +29,7 @@ inline Album::Album(){
     this->artist = "";
     this->date_release = "";
 }
-inline Album::Album(std::string id_album, std::string name_album, std::string artist, std::string date_release){
+inline Album::Album(const std::string& id_album, const std::string& name_album, const std::string& artist, const std::string& date_release){
     this->id_album = id_album;
     this->name_album = name_album;
     this->artist = artist;

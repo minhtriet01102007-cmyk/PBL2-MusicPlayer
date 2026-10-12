@@ -10,7 +10,7 @@ class Artist{
         long long followers;
     public:
         Artist();
-        Artist(std::string id_artist, std::string name_artist, std::string country, long long followers = 0);
+        Artist(const std::string& id_artist, const std::string& name_artist, const std::string& country, long long followers = 0);
         Artist(const Artist& other);
         ~Artist();
         std::string getIdArtist() const;
@@ -30,7 +30,7 @@ inline Artist::Artist(){
     this->country = "";
     this->followers = 0;
 }
-inline Artist::Artist(std::string id_artist, std::string name_artist, std::string country, long long followers){
+inline Artist::Artist(const std::string& id_artist, const std::string& name_artist, const std::string& country, long long followers = 0){
     this->id_artist = id_artist;
     this->name_artist = name_artist;
     this->country = country;
