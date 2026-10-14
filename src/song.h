@@ -13,10 +13,11 @@ class Song{
         std::string date_release;
         int count_playsong;
         std::string file_path;  // Đường dẫn file nhạc (.mp3 / .wav)
+        long long plays; // số lượt nghe
     public:
         Song();
         Song(const std::string& id_song, const std::string& name, const std::string& artist, const std::string& album, const std::string& type, 
-             const int& duration, const std::string& date_release, const std::string& file_path, const int& count_playsong = 0);
+             const int& duration, const std::string& date_release, const std::string& file_path, const int& count_playsong = 0, const long long& plays);
         std::string getIdSong() const;
         std::string getName() const;
         std::string getArtist() const;
@@ -26,6 +27,7 @@ class Song{
         std::string getDateRelease() const;
         int getCount() const;
         std::string getFilePath() const;
+        long long getPlays() const;
         void setIdSong(const std::string& id_song);
         void setName(const std::string& name);
         void setArtist(const std::string& artist);
@@ -35,6 +37,7 @@ class Song{
         void setDateRelease(const std::string& date_release);
         void setCount(int count_playsong);
         void setFilePath(const std::string& file_path);
+        void setPlays(const long long& plays);
         void increasePlayCount();
         void display() const;
         bool operator==(const Song& other) const;
@@ -50,9 +53,10 @@ inline Song::Song(){
     this->date_release = "";
     this->file_path = "";
     this->count_playsong = 0;
+    this->plays = 0;
 }
-inline Song:: Song(const std::string& id_song, const std::string& name, const std::string& artist, const std::string& album, const std::string& type, 
-             const int& duration, const std::string& date_release, const std::string& file_path, const int& count_playsong = 0){
+inline Song::Song(const std::string& id_song, const std::string& name, const std::string& artist, const std::string& album, const std::string& type, 
+             const int& duration, const std::string& date_release, const std::string& file_path, const int& count_playsong = 0, const long long& plays){
     this->id_song = id_song;
     this->name = name;
     this->artist = artist;
@@ -62,6 +66,7 @@ inline Song:: Song(const std::string& id_song, const std::string& name, const st
     this->date_release = date_release;
     this->file_path = file_path;
     this->count_playsong = count_playsong;
+    this->plays = plays;
 }
 inline std::string Song::getIdSong() const{ return this->id_song; }
 inline std::string Song::getName() const{ return this->name; }
@@ -72,6 +77,7 @@ inline int Song::getDuration() const{ return this->duration; }
 inline std::string Song::getDateRelease() const{ return this->date_release; }
 inline int Song::getCount() const{ return this->count_playsong; }
 inline std::string Song::getFilePath() const{ return this->file_path; }
+inline long long Song::getPlays() const{ return this->plays; }
 
 inline void Song::setIdSong(const std::string& id_song){ this->id_song = id_song; }
 inline void Song::setName(const std::string& name){ this->name = name; }
@@ -82,6 +88,7 @@ inline void Song::setDuration(int duration){ this->duration = duration; }
 inline void Song::setDateRelease(const std::string& date_release){ this->date_release = date_release; }
 inline void Song::setCount(int count_playsong){ this->count_playsong = count_playsong; }
 inline void Song::setFilePath(const std::string& file_path){ this->file_path = file_path; }
+inline void Song::setPlays(const long long& plays){ this->plays = plays; }
 
 inline void Song::increasePlayCount(){ this->count_playsong++; }
 inline void Song::display() const{
