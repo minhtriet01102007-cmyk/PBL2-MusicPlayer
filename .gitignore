@@ -3,7 +3,7 @@ build/
 bin/
 obj/
 Debug/
-Release/
+Release/git status
 
 # Executable files
 *.exe

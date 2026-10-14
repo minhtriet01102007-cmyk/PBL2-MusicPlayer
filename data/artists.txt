@@ -1,0 +1,4 @@
+id_artist|name_artist
+A001|Dangrangto
+A002|Son Tung M-TP
+A003|Den
