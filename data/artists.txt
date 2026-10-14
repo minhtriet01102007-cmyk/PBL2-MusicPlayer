@@ -1,4 +1,20 @@
-id_artist|name_artist
-A001|Dangrangto
-A002|Son Tung M-TP
-A003|Den
+A01 | Rose          | New Zealand | 100000000
+A02 | Justin Bieber | Canada      | 230192890
+A03 | Min           | Viet Nam    | 6038293
+A04 | CONGB         | Viet Nam    | 7123564
+A05 | Bray          | Viet Nam    | 8792010
+A06 | Dangrangto    | Viet Nam    | 10290983
+A07 | HIEUTHUHAI    | Viet Nam    | 11273901
+A08 | Amee          | Viet Nam    | 6839082
+A09 | Ha Thai Hoang | Viet Nam    | 300010
+A10 | NEGAV         | Viet Nam    | 9999999
+A11 | The Kid LAROI | Australia   | 190190383
+A12 | Son Tung MTP  | Viet Nam    | 111111111
+A13 | hqhuy         | Viet Nam    | 10002
+A14 | 1nG           | Viet Nam    | 9967
+A15 | DONAL         | Viet Nam    | 5048
+A16 | Low G         | Viet Nam    | 219272633
+A17 | JustaTee      | Viet Nam    | 179273749
+A18 | Ludacris      | America     | 328484902
+A19 | Bruno Mars    | America     | 333332893
+A20 | V#            | Viet Nam    | 538629
