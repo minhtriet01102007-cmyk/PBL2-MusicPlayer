@@ -4,16 +4,16 @@
 template <typename K, typename V>
 class HashTable{
     private:
-        static const int TABLE_SIZE = 101; 
-        HashNode<K, V>* table[TABLE_SIZE]; 
+        static const int TABLE_SIZE = 101; // Số lượng vị trí trong bảng băm
+        HashNode<K, V>* table[TABLE_SIZE]; // mảng các con trỏ đến HashNode
         int count;
-        int hashFunction(const std::string& key) const;
+        int hashFunction(const std::string& key) const; // Chuyển chuỗi key thành một chỉ số từ 0 đến TABLE_SIZE - 1
     public:
         HashTable();
         ~HashTable();
-        void insert(const K& key, const V& value);
-        bool search(const K& key, V& outValue) const;
-        bool remove(const K& key);
+        void insert(const K& key, const V& value); // Thêm một cặp (key, value) vào bảng băm
+        bool search(const K& key, V& outValue) const; // Tìm kiếm value theo key
+        bool remove(const K& key); // Xóa phần tử có key tương ứng
         int getCount() const;
         bool isEmpty() const;
         void clear();
@@ -23,7 +23,7 @@ template <typename K, typename V>
 HashTable<K, V>::HashTable(){
     this->count = 0;
     for (int i = 0; i < TABLE_SIZE; i++){
-        this->table[i] = nullptr;
+        this->table[i] = nullptr; // bảng đang rỗng
     }
 }
 
@@ -35,24 +35,25 @@ HashTable<K, V>::~HashTable(){
 template <typename K, typename V>
 int HashTable<K, V>::hashFunction(const std::string& key) const{
     int sum = 0;
-    for (char c : key) sum = (sum * 31 + c) % TABLE_SIZE; // Nhân 31 giúp phân tán chuỗi đều hơn
+    // Duyệt lần lượt từng ký tự c trong chuỗi key
+    for (char c : key) sum = (sum * 31 + c) % TABLE_SIZE; 
     return (sum < 0) ? (sum + TABLE_SIZE) : sum;
 }
 
 template <typename K, typename V>
 void HashTable<K, V>::insert(const K& key, const V& value){
     int index = this->hashFunction(key);
-    HashNode<K, V>* curr = this->table[index];
-    while (curr != nullptr){
+    HashNode<K, V>* curr = this->table[index]; // curr trỏ đến node đầu tiên trong bucket
+    while (curr != nullptr){ 
         if (curr->key == key){
             curr->value = value;
             return;
         }
         curr = curr->next;
     }
-    HashNode<K, V>* newNode = new HashNode<K, V>(key, value);
-    newNode->next = this->table[index];
-    this->table[index] = newNode;
+    HashNode<K, V>* newNode = new HashNode<K, V>(key, value); // Tạo nút mới nếu khóa chưa tồn tại
+    newNode->next = this->table[index]; // cho nút mới trỏ đến nút đầu tiên hiện tại
+    this->table[index] = newNode; // cập nhật bucket để nút mới trở thành nút đầu tiên
     this->count++;
 }
 
@@ -73,13 +74,13 @@ bool HashTable<K, V>::search(const K& key, V& outValue) const{
 template <typename K, typename V>
 bool HashTable<K, V>::remove(const K& key){
     int index = this->hashFunction(key);
-    HashNode<K, V>* curr = this->table[index];
-    HashNode<K, V>* prev = nullptr;
+    HashNode<K, V>* curr = this->table[index]; // curr trỏ đến node đầu
+    HashNode<K, V>* prev = nullptr; // chưa có node đứng trước curr
     while (curr != nullptr){
         if (curr->key == key){
-            if (prev == nullptr){
-                this->table[index] = curr->next;
-            } else{
+            if (prev == nullptr){ // không có Node đứng trước curr
+                this->table[index] = curr->next; // xóa node đầu 
+            } else{ // đã có Node đứng trước curr
                 prev->next = curr->next;
             }
             delete curr;
