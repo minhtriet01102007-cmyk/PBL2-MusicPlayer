@@ -1,19 +1,19 @@
 #pragma once
-#include <vector>
-#include <algorithm>
+#include <vector> // dùng std::vector<T> để lưu các phần tử Heap.
+#include <algorithm> // cung cấp std::swap() để đổi chỗ hai phần tử
 #include <stdexcept>
 
-template <typename T, typename Comparator>
+template <typename T, typename Comparator> // Comparator: kiểu đối tượng dùng để so sánh hai phần tử
 class MaxHeap{
     private:
-        std::vector<T> heap;
-        Comparator compare;
+        std::vector<T> heap; // mảng lưu các phần tử
+        Comparator compare; // đối tượng so sánh hai phần tử
         void heapifyUp(int index);
         void heapifyDown(int index);
     public:
-        MaxHeap(Comparator comp = Comparator());
+        MaxHeap(Comparator comp = Comparator()); //k truyền đối số => đối tượng Comparator mặc định
         void insert(const T& val);
-        T extractMax();
+        T extractMax(); // Lấy và xóa phần tử có ưu tiên cao nhất
         bool isEmpty() const;
         int size() const;
 };
@@ -27,7 +27,7 @@ template <typename T, typename Comparator>
 void MaxHeap<T, Comparator>::heapifyUp(int index){
     while (index > 0){
         int parent = (index - 1) / 2;
-        if (this->compare(this->heap[index], this->heap[parent])){
+        if (this->compare(this->heap[index], this->heap[parent])){ // Kiểm tra phần tử hiện tại có ưu tiên cao hơn Node cha không
             std::swap(this->heap[index], this->heap[parent]);
             index = parent;
         } else break;
@@ -60,11 +60,11 @@ void MaxHeap<T, Comparator>::insert(const T& val){
 template <typename T, typename Comparator>
 T MaxHeap<T, Comparator>::extractMax(){
     if (this->heap.empty()){
-        throw std::runtime_error("Heap rỗng!");
+        throw std::runtime_error("Heap rỗng");
     }
-    T maxVal = this->heap[0];
-    this->heap[0] = this->heap.back();
-    this->heap.pop_back();
+    T maxVal = this->heap[0]; // lưu phần tử lớn nhất
+    this->heap[0] = this->heap.back(); // lấy phần tử cuối, gán phần tử cuối vào vị trí gốc
+    this->heap.pop_back(); // xóa phần tử cuối cùng
     if (!this->heap.empty()){
         this->heapifyDown(0);
     }
