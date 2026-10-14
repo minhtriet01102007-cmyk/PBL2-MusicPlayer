@@ -42,7 +42,6 @@ target_include_directories(MusicSystem PRIVATE
     dsa/maxheap
 )
 
-# Link các thư viện Qt cần thiết
 target_link_libraries(MusicSystem PRIVATE
     Qt6::Widgets
     Qt6::Multimedia
