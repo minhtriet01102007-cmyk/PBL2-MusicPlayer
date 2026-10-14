@@ -25,9 +25,7 @@ set(PROJECT_SOURCES
     src/artist.h
     src/playlist.h
     dsa/dlinkedlist/dlinkedlist.h
-    dsa/dlinledlist/dnode.h
     dsa/hashtable/hashtable.h
-    dsa/hashtable/hashtablenode.h
     dsa/maxheap/maxheap.h
 )
 
@@ -35,6 +33,16 @@ add_executable(MusicSystem
     ${PROJECT_SOURCES}
 )
 
+target_include_directories(MusicSystem PRIVATE
+    .
+    src
+    dsa
+    dsa/dlinkedlist
+    dsa/hashtable
+    dsa/maxheap
+)
+
+# Link các thư viện Qt cần thiết
 target_link_libraries(MusicSystem PRIVATE
     Qt6::Widgets
     Qt6::Multimedia
