@@ -1,1 +1,0 @@
-user_id|song_id|date_time

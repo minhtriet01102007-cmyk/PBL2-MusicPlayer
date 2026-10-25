@@ -1,17 +1,17 @@
 AL01 | Rosie                | Rose              | 2024-12-06
 AL02 | My World 2.0         | Justin Bieber     | 2010-03-19
 AL03 | Dear Min             | Min               | 2025-10-22
-AL04 | Tinh Ha "Say Hi"     | CONGB             | 2026-10-02
+AL04 | Tinh Hà "Say Hi"     | CONGB             | 2026-10-02
 AL05 | UNhiddenGem          | Bray              | 2026-05-05
 AL06 | Mini-EP              | Dangrangto        | 2026-02-28
 AL07 | Vida                 | Justin Bieber     | 2019-02-01
 AL08 | dreAMEE              | Bray & Amee       | 2020-06-28
-AL09 | EP                   | Ha Thai Hoang     | 2021-01-01
+AL09 | EP                   | Hà Thái Hoàng     | 2021-01-01
 AL10 | L2K                  | Low G             | 2025-10-21
-AL11 | Nghi Nhieu           | hqhuy & 1nG       | 2025-10-16
-AL12 | Ngu mot minh         | HIEUTHUHAI        | 2022-12-15
-AL13 | m-tp M-TP            | Son Tung MTP      | 2017-04-01
+AL11 | Nghĩ nhiều           | hqhuy & 1nG       | 2025-10-16
+AL12 | Ngủ một mình         | HIEUTHUHAI        | 2022-12-15
+AL13 | m-tp M-TP            | Sơn Tùng MTP      | 2017-04-01
 AL14 | FCK LOVE 3: OVER YOU*| The Kid LAROI     | 2021-07-23
 AL15 | Cho Bao              | Bray              | 2025-07-08
-AL16 | trai tim bang bo     | Dangrangto & DONAL| 2026-06-17
+AL16 | trái tim băng bó     | Dangrangto & DONAL| 2026-06-17
 
