@@ -34,23 +34,19 @@ Artist::Artist(){
     this->country = "";
     this->followers = 0;
 }
-
 Artist::Artist(const std::string& id_artist, const std::string& name_artist, const std::string& country, long long followers){
     this->id_artist = id_artist;
     this->name_artist = name_artist;
     this->country = country;
     this->followers = followers;
 }
-
 Artist::Artist(const Artist& other){
     this->id_artist = other.id_artist;
     this->name_artist = other.name_artist;
     this->country = other.country;
     this->followers = other.followers;
 }
-
 Artist::~Artist(){}
-
 std::string Artist::getIdArtist() const{
     return this->id_artist;
 }
@@ -63,7 +59,6 @@ std::string Artist::getCountry() const{
 long long Artist::getFollowers() const{
     return this->followers;
 }
-
 void Artist::setIdArtist(const std::string& id_artist){
     this->id_artist = id_artist;
 }
@@ -76,11 +71,9 @@ void Artist::setCountry(const std::string& country){
 void Artist::setFollowers(long long followers){
     this->followers = followers;
 }
-
 void Artist::increaseFollowers(){
     this->followers++;
 }
-
 void Artist::display() const{
     std::cout << "[Artist] " << this->name_artist << " (" << this->country << ") | Followers: " << this->followers << "\n";
 }

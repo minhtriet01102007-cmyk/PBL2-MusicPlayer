@@ -20,7 +20,7 @@ Admin::Admin() : User(){
     this->role = "ADMIN";
 }
 Admin::Admin(const std::string& id_user, const std::string& username, const std::string& email, 
-              const std::string& password, const std::string& role) : User(id_user, username, email, password){
+             const std::string& password, const std::string& role) : User(id_user, username, email, password){
     this->role = role;
 }
 Admin::Admin(const Admin& other) : User(other){
@@ -36,5 +36,5 @@ void Admin::setRole(const std::string& role){
 void Admin::display() const{
     std::cout << "[Admin] ";
     this->User::display();
-    std::cout << " | Role: " << this->role << "\n";
+    std::cout << " | Role: " << this->role << std::endl;
 }

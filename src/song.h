@@ -16,10 +16,8 @@ class Song{
         long long plays; // số lượt nghe
     public:
         Song();
-        // Đưa giá trị mặc định ra cuối cùng và chỉ khai báo ở đây
         Song(const std::string& id_song, const std::string& name, const std::string& artist, const std::string& album, const std::string& type, 
-             const int& duration, const std::string& date_release, const std::string& file_path, const int& count_playsong = 0, const long long& plays = 0);
-             
+             const int& duration, const std::string& date_release, const std::string& file_path, const int& count_playsong = 0, const long long& plays = 0);   
         std::string getIdSong() const;
         std::string getName() const;
         std::string getArtist() const;
@@ -30,7 +28,6 @@ class Song{
         int getCount() const;
         std::string getFilePath() const;
         long long getPlays() const;
-        
         void setIdSong(const std::string& id_song);
         void setName(const std::string& name);
         void setArtist(const std::string& artist);
@@ -41,12 +38,10 @@ class Song{
         void setCount(int count_playsong);
         void setFilePath(const std::string& file_path);
         void setPlays(const long long& plays);
-        
         void increasePlayCount();
         void display() const;
         bool operator==(const Song& other) const;
 };
-
 Song::Song(){
     this->id_song = "";
     this->name = "";
@@ -72,7 +67,6 @@ Song::Song(const std::string& id_song, const std::string& name, const std::strin
     this->count_playsong = count_playsong;
     this->plays = plays;
 }
-
 std::string Song::getIdSong() const{ return this->id_song; }
 std::string Song::getName() const{ return this->name; }
 std::string Song::getArtist() const{ return this->artist; }
@@ -99,7 +93,7 @@ void Song::increasePlayCount(){ this->count_playsong++; }
 void Song::display() const{
     std::cout << "[" << this->id_song << "] " << this->name << " - " << this->artist 
               << " (" << this->duration / 60 << ":" << (this->duration % 60 < 10 ? "0" : "") << this->duration % 60 << ")"
-              << " | Plays: " << this->count_playsong << "\n";
+              << " | Plays: " << this->count_playsong << std::endl;
 }
 bool Song::operator==(const Song& other) const{
     return this->id_song == other.id_song;

@@ -72,5 +72,5 @@ Playlist* Listener::getPlaylistById(const std::string& id_playlist){
 void Listener::display() const{
     std::cout << "[Listener] ";
     this->User::display(); 
-    std::cout << " | Played: " << this->total_songs_played << " | Playlists: " << this->playlists.size() << "\n";
+    std::cout << " | Played: " << this->total_songs_played << " | Playlists: " << this->playlists.size() << std::endl;
 }

@@ -25,7 +25,6 @@ class Playlist{
         DoublyLinkedList<Song*>& getQueue(); //Việc trả về tham chiếu cho phép bên ngoài có thể thao tác trực tiếp trên danh sách bài hát của playlist mà không tạo bản sao.
         void display() const;
 };
-
 Playlist::Playlist(){
     this->id_playlist = "";
     this->name_playlist = "";
