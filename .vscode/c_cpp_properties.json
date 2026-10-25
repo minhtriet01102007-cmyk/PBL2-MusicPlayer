@@ -1,1 +1,17 @@
-
+{
+  "configurations": [
+    {
+      "name": "Qt",
+      "compilerPath": "C:/Qt/Tools/mingw1310_64/bin/g++.exe",
+      "includePath": [
+        "${workspaceFolder}",
+        "${workspaceFolder}/src/**",
+        "${workspaceFolder}/service/**",
+        "${workspaceFolder}/ui/**",
+        "${workspaceFolder}/dsa/**"
+      ],
+      "cppStandard": "c++17"
+    }
+  ],
+  "version": 4
+}
