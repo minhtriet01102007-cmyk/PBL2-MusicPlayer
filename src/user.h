@@ -22,27 +22,39 @@ class User{
         void setPassword(const std::string& password);
         virtual void display() const; 
 };
-inline User::User(){
+
+User::User(){
     this->id_user = "";
     this->username = "";
     this->email = "";
     this->password = "";
 }
-inline User::User(const std::string& id_user, const std::string& username, const std::string& email, const std::string& password){
+
+User::User(const std::string& id_user, const std::string& username, const std::string& email, const std::string& password){
     this->id_user = id_user;
     this->username = username;
     this->email = email;
     this->password = password;
 }
-inline User::~User() {}
-inline std::string User::getIdUser() const{ return this->id_user; }
-inline std::string User::getUsername() const{ return this->username; }
-inline std::string User::getEmail() const{ return this->email; }
-inline std::string User::getPassword() const{ return this->password; }
-inline void User::setIdUser(const std::string& id_user){ this->id_user = id_user; }
-inline void User::setUsername(const std::string& username){ this->username = username; }
-inline void User::setEmail(const std::string& email){ this->email = email; }
-inline void User::setPassword(const std::string& password){ this->password = password; }
-inline void User::display() const{
+
+User::~User() {}
+
+std::string User::getIdUser() const{ return this->id_user; }
+
+std::string User::getUsername() const{ return this->username; }
+
+std::string User::getEmail() const{ return this->email; }
+
+std::string User::getPassword() const{ return this->password; }
+
+void User::setIdUser(const std::string& id_user){ this->id_user = id_user; }
+
+void User::setUsername(const std::string& username){ this->username = username; }
+
+void User::setEmail(const std::string& email){ this->email = email; }
+
+void User::setPassword(const std::string& password){ this->password = password; }
+
+void User::display() const{
     std::cout << "ID: " << this->id_user << " | Username: " << this->username;
 }
