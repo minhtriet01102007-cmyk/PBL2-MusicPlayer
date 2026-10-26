@@ -1,3 +1,3 @@
 LS001|triet    |triet@gmail.com|triet123|12|2
-LS002|mai_long |long@gmail.com |long123|7 |1
+LS002|long     |long@gmail.com |long123|7 |1
 LS003|user_demo|demo@gmail.com |listener123|0 |0
