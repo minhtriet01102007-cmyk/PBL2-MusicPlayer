@@ -1,0 +1,2 @@
+AD001|admin        |admin@musicplayer.local  |admin123  |ADMIN
+AD002|admin123     |manager@musicplayer.local|admin345  |ADMIN
