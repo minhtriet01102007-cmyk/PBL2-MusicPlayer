@@ -1,3 +1,4 @@
+// Trả về các đối tượng playlist
 #pragma once
 #include <fstream>
 #include <string>
