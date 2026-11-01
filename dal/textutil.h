@@ -15,7 +15,9 @@ std::string trim(const std::string& s){
     return s.substr(b, e - b);
 }
 std::string lower(std::string s){
-    std::transform(s.begin(), s.end(), s.begin(), [](unsigned char c){ return std::tolower(c); });
+    for (char& c : s){ // Duyệt qua từng ký tự 
+        c = std::tolower((unsigned char)c); // Chuyển ký tự đó thành chữ thường
+    }
     return s;
 }
 int toInt(const std::string& s, int def = 0){
