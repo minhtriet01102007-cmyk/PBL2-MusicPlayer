@@ -1,18 +1,17 @@
 #pragma once
-#include <algorithm>
-#include <cctype>
-#include <fstream>
-#include <sstream>
+#include <algorithm> // std::max
+#include <cctype>    // std::isspace, std::isdigit, std::tolower
+#include <fstream>   // std::ifstream để đọc file
+#include <sstream>   // std::stringstream để cắt chuỗi
 #include <string>
 #include <vector>
 
 namespace textutil{
-
-std::string trim(const std::string& s){
-    size_t b = 0, e = s.size();
-    while (b < e && std::isspace((unsigned char)s[b])) ++b;
-    while (e > b && std::isspace((unsigned char)s[e - 1])) --e;
-    return s.substr(b, e - b);
+std::string trim(const std::string& s){ // cắt bỏ các khoảng trắng thừa ở đầu b và cuối e chuỗi
+    size_t b = 0, e = s.size(); // b là đầu chuỗi, e là cuối chuỗi
+    while (b < e && std::isspace((unsigned char)s[b])) ++b; // dịch b sang phải khi gặp khoảng trắng
+    while (e > b && std::isspace((unsigned char)s[e - 1])) --e; // dịch e sang trái khi gặp khoảng trống
+    return s.substr(b, e - b); // Trả về đoạn chuỗi con từ b đến e
 }
 std::string lower(std::string s){
     for (char& c : s){ // Duyệt qua từng ký tự 
@@ -20,7 +19,7 @@ std::string lower(std::string s){
     }
     return s;
 }
-int toInt(const std::string& s, int def = 0){
+int toInt(const std::string& s, int def = 0){ // chuyển chuỗi sang số nguyên
     try{
         return std::stoi(s);
     }
@@ -28,7 +27,7 @@ int toInt(const std::string& s, int def = 0){
         return def;
     }
 }
-long long toLL(const std::string& s, long long def = 0){
+long long toLL(const std::string& s, long long def = 0){ // chuyển chuỗi sang số nguyên lớn
     try{
         return std::stoll(s);
     }
@@ -36,21 +35,26 @@ long long toLL(const std::string& s, long long def = 0){
         return def;
     }
 }
-// Đoán ký tự phân cách của một dòng dữ liệu
-char detectDelim(const std::string& line){
+char detectDelim(const std::string& line){ // đoán ký tự phân cách của một dòng dữ liệu
     for (char c : {'|', ';', '\t', ','}) 
-        if (line.find(c) != std::string::npos) return c;
-    return '|';
+        if (line.find(c) != std::string::npos) return c; // tìm thấy, hàm sẽ trả về ký tự đó
+    return '|'; // nếu không tìm thấy, mặc định trả về '|'
 }
 std::vector<std::string> split(const std::string& line, char d){
     std::vector<std::string> parts;
-    std::string item;
-    std::stringstream ss(line);
-    while (std::getline(ss, item, d)) parts.push_back(trim(item));
+    std::string current = ""; // Biến tạm để gom các ký tự lại thành 1 từ/cột
+    for (char c : line){
+        if (c == d){  // Nếu gặp ký tự phân cách 
+            parts.push_back(trim(current)); // Đưa phần vừa gom được vào danh sách
+            current = ""; // Reset lại chuỗi tạm để chuẩn bị gom phần tiếp theo
+        } else{ // Nếu chưa gặp ký tự phân cách, tiếp tục gom ký tự vào chuỗi tạm
+            current += c; 
+        }
+    }
+    parts.push_back(trim(current));
     return parts;
 }
-// Đọc các dòng có dữ liệu (bỏ BOM, bỏ \r, bỏ dòng trống và dòng chú thích bắt đầu bằng #)
-std::vector<std::string> readLines(const std::string& path){
+std::vector<std::string> readLines(const std::string& path){ // Đọc các dòng có dữ liệu 
     std::vector<std::string> lines;
     std::ifstream in(path);
     std::string l;
@@ -86,5 +90,4 @@ std::string nextId(const std::vector<std::string>& ids, const std::string& defPr
     if (num.size() < width) num = std::string(width - num.size(), '0') + num;
     return prefix + num;
 }
-
 }
