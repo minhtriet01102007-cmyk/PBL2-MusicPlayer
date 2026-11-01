@@ -38,7 +38,8 @@ long long toLL(const std::string& s, long long def = 0){
 }
 // Đoán ký tự phân cách của một dòng dữ liệu
 char detectDelim(const std::string& line){
-    for (char c : {'|', ';', '\t', ','}) if (line.find(c) != std::string::npos) return c;
+    for (char c : {'|', ';', '\t', ','}) 
+        if (line.find(c) != std::string::npos) return c;
     return '|';
 }
 std::vector<std::string> split(const std::string& line, char d){
