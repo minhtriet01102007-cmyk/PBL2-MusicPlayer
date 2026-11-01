@@ -15,6 +15,7 @@ class User{
         std::string getIdUser() const;
         std::string getUsername() const;
         std::string getEmail() const;
+        std::string getPassword() const;
         void setIdUser(const std::string& id_user);
         void setUsername(const std::string& username);
         void setEmail(const std::string& email);
@@ -42,6 +43,7 @@ User::~User(){}
 std::string User::getIdUser() const{ return this->id_user; }
 std::string User::getUsername() const{ return this->username; }
 std::string User::getEmail() const{ return this->email; }
+std::string User::getPassword() const{ return this->password; }
 
 void User::setIdUser(const std::string& id_user){ this->id_user = id_user; }
 void User::setUsername(const std::string& username){ this->username = username; }
