@@ -1,17 +1,21 @@
 {
-  "configurations": [
-    {
-      "name": "Qt",
-      "compilerPath": "C:/Qt/Tools/mingw1310_64/bin/g++.exe",
-      "includePath": [
-        "${workspaceFolder}",
-        "${workspaceFolder}/src/**",
-        "${workspaceFolder}/service/**",
-        "${workspaceFolder}/ui/**",
-        "${workspaceFolder}/dsa/**"
-      ],
-      "cppStandard": "c++17"
-    }
-  ],
-  "version": 4
+    "configurations": [
+        {
+            "name": "CMake",
+            "includePath": [
+                "${workspaceFolder}/**",
+                "${workspaceFolder}/src",
+                "${workspaceFolder}/dsa",
+                "${workspaceFolder}/bll",
+                "${workspaceFolder}/dal",
+                "${workspaceFolder}/ui",
+                "${workspaceFolder}/data",
+                "${workspaceFolder}/assets"
+            ],
+            "compilerPath": "C:/msys64/ucrt64/bin/gcc.exe",
+            "intelliSenseMode": "gcc-x64",
+            "configurationProvider": "ms-vscode.cmake-tools"
+        }
+    ],
+    "version": 4
 }
