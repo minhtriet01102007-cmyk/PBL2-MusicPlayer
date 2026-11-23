@@ -3,6 +3,7 @@
 #include <vector>
 #include <iostream>
 #include "dsa/dlinkedlist/dlinkedlist.h"
+#include "dsa/dlinkedlist/dlistutil.h"
 
 class Playlist{
     private:
@@ -13,16 +14,13 @@ class Playlist{
     public:
         Playlist();
         Playlist(const std::string& id_playlist, const std::string& name_playlist, const std::string& id_user);
-
         std::string getIdPlaylist() const;
         std::string getNamePlaylist() const;
         std::string getIdUser() const;
         int getSongCount() const;
-
         void setIdPlaylist(const std::string& id_playlist);
         void setNamePlaylist(const std::string& name_playlist);
         void setIdUser(const std::string& id_user);
-
         bool addSong(const std::string& id_song);    
         bool removeSong(const std::string& id_song);
         bool containsSong(const std::string& id_song) const;
@@ -31,6 +29,7 @@ class Playlist{
         const DoublyLinkedList<std::string>& getSongs() const;        
         void display() const;
 };
+
 Playlist::Playlist(){
     this->id_playlist = "";
     this->name_playlist = "";
@@ -76,8 +75,9 @@ bool Playlist::containsSong(const std::string& id_song) const{
 void Playlist::clearSongs(){ 
     this->songs.clear(); 
 }
-std::vector<std::string> Playlist::getSongIds() const{ 
-    return this->songs.toVector(); 
+std::vector<std::string> Playlist::getSongIds() const{
+    DoublyLinkedList<std::string> copy = this->songs; // sao chép để không làm đổi vị trí đang phát của playlist
+    return dlist::toVector(copy);
 }
 const DoublyLinkedList<std::string>& Playlist::getSongs() const{ 
     return this->songs; 
