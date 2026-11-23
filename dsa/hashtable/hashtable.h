@@ -1,22 +1,28 @@
 #pragma once
 #include <string>
+#include <vector>
+#include "hashtablenode.h"
 
 template <typename K, typename V>
 class HashTable{
     private:
-        static const int TABLE_SIZE = 101; // Số lượng vị trí trong bảng băm
+        static const int TABLE_SIZE = 1000; // Số lượng ô lưu trữ trong bảng băm
         HashNode<K, V>* table[TABLE_SIZE]; // mảng các con trỏ đến HashNode
         int count;
         int hashFunction(const std::string& key) const; // Chuyển chuỗi key thành một chỉ số từ 0 đến TABLE_SIZE - 1
     public:
         HashTable();
+        HashTable(const HashTable& other) = delete;            // cấm sao chép
+        HashTable& operator=(const HashTable& other) = delete;
         ~HashTable();
         void insert(const K& key, const V& value); // Thêm một cặp (key, value) vào bảng băm
         bool search(const K& key, V& outValue) const; // Tìm kiếm value theo key
         bool remove(const K& key); // Xóa phần tử có key tương ứng
+        bool contains(const K& key) const; // Kiểm tra key có tồn tại không
         int getCount() const;
         bool isEmpty() const;
         void clear();
+        std::vector<V> getAllValues() const; // Lấy toàn bộ value (để liệt kê, ghi file, xếp hạng)
 };
 
 template <typename K, typename V>
@@ -115,4 +121,28 @@ void HashTable<K, V>::clear(){
         this->table[i] = nullptr;
     }
     this->count = 0;
+}
+
+template <typename K, typename V>
+bool HashTable<K, V>::contains(const K& key) const{
+    int index = this->hashFunction(key);
+    HashNode<K, V>* curr = this->table[index];
+    while (curr != nullptr){
+        if (curr->key == key) return true;
+        curr = curr->next;
+    }
+    return false;
+}
+
+template <typename K, typename V>
+std::vector<V> HashTable<K, V>::getAllValues() const{
+    std::vector<V> result;
+    for (int i = 0; i < TABLE_SIZE; i++){
+        HashNode<K, V>* curr = this->table[i];
+        while (curr != nullptr){
+            result.push_back(curr->value);
+            curr = curr->next;
+        }
+    }
+    return result;
 }
