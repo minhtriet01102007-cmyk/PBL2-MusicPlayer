@@ -10,11 +10,15 @@ class DoublyLinkedList{
         Node<T>* tail;
         Node<T>* current; 
         int size;
+        void copyFrom(const DoublyLinkedList& other); // sao chép từng node của other sang danh sách này
     public:
         DoublyLinkedList();
+        DoublyLinkedList(const DoublyLinkedList& other); // sao chép sâu (cần khi Playlist bị sao chép)
+        DoublyLinkedList& operator=(const DoublyLinkedList& other);
         ~DoublyLinkedList();
         void pushBack(const T& val); // Thêm phần tử vào cuối danh sách
         bool remove(const T& val); // Xóa phần tử có giá trị bằng val 
+        bool contains(const T& val) const; // Kiểm tra val có trong danh sách không (không đổi vị trí đang phát)
         T getCurrent() const; // Trả về phần tử đang được chọn hiện tại
         bool hasNext() const; // Kiểm tra xem có node phía sau current
         bool hasPrev() const; // Kiểm tra xem có node phía trước current
@@ -25,13 +29,35 @@ class DoublyLinkedList{
         bool isEmpty() const;
         void clear(); // Xóa toàn bộ danh sách
 };
-
 template <typename T>
 DoublyLinkedList<T>::DoublyLinkedList() : head(nullptr), tail(nullptr), current(nullptr), size(0){}
 
 template <typename T>
+DoublyLinkedList<T>::DoublyLinkedList(const DoublyLinkedList& other) : head(nullptr), tail(nullptr), current(nullptr), size(0){
+        this->copyFrom(other);
+}
+
+template <typename T>
+DoublyLinkedList<T>& DoublyLinkedList<T>::operator=(const DoublyLinkedList& other){
+        if (this != &other){
+            this->clear();
+            this->copyFrom(other);
+        }
+        return *this;
+}
+
+template <typename T>
 DoublyLinkedList<T>::~DoublyLinkedList(){
         this->clear();
+}
+
+template <typename T>
+void DoublyLinkedList<T>::copyFrom(const DoublyLinkedList& other){
+        for (Node<T>* p = other.head; p != nullptr; p = p->next){
+            this->pushBack(p->data);
+            if (p == other.current) this->current = this->tail; // giữ nguyên vị trí đang phát
+        }
+        if (other.current == nullptr) this->current = nullptr;
 }
 
 template <typename T>
@@ -56,7 +82,7 @@ bool DoublyLinkedList<T>::remove(const T& val){
                 if (curr->prev != nullptr) curr->prev->next = curr->next; // Nối next
                 if (curr->next != nullptr) curr->next->prev = curr->prev; // Nối prev
                 if (this->current == curr){
-                    this->current = (curr->next != nullptr) ? curr->next : nullptr; // cập nhật current
+                    this->current = (curr->next != nullptr) ? curr->next : curr->prev; // cập nhật current (hết node sau thì lùi về node trước)
                 }
                 delete curr;
                 this->size--;
@@ -90,7 +116,7 @@ T DoublyLinkedList<T>::next(){
             return this->current->data;
         }
         return (this->current != nullptr) ? this->current->data : T(); 
-        // T() nếu là danh sách rỗng, T() là giá trị mặc định của kiểu T, int=>0, string=>""
+        // T(): giá trị mặc định của kiểu dữ liệu T
 }
 
 template <typename T>
@@ -129,4 +155,12 @@ void DoublyLinkedList<T>::clear(){
         this->tail = nullptr;
         this->current = nullptr;
         this->size = 0;
+}
+
+template <typename T>
+bool DoublyLinkedList<T>::contains(const T& val) const{
+        for (Node<T>* p = this->head; p != nullptr; p = p->next){
+            if (p->data == val) return true;
+        }
+        return false;
 }
