@@ -1,5 +1,6 @@
 #pragma once
 #include <algorithm>
+#include <fstream>
 #include <string>
 #include <vector>
 #include "songinfo.h"
@@ -9,45 +10,51 @@
 #include "src/song.h"
 #include "src/artist.h"
 #include "src/album.h"
-#include "../dal/songdao.h"
-#include "../dal/artistdao.h"
-#include "../dal/albumdao.h"
-#include "../dal/textutil.h"
+#include "dal/songdao.h"
+#include "dal/artistdao.h"
+#include "dal/albumdao.h"
+#include "dal/textutil.h"
 #include "dsa/hashtable/hashtable.h"
 
+// Nghiệp vụ danh mục nhạc: bài hát, nghệ sĩ, album (tìm kiếm, bảng xếp hạng, thêm/sửa/xóa dành cho Admin).
+// Giữ dữ liệu trong bộ nhớ (vector + HashTable tra theo id), chỉ gọi DAO để đọc/ghi file.
+// Quy ước: các hàm trả về std::string là thông báo lỗi, chuỗi rỗng nghĩa là thành công.
 class SongService{
     private:
         SongDAO songDao;
         ArtistDAO artistDao;
         AlbumDAO albumDao;
-        AuthService& auth; // Tham chiếu đến AuthService để kiểm tra tài khoản
-        std::vector<Song*> songs;
+        AuthService& auth;
+        std::string logPath;            // data/repair_log.txt: ghi lại những gì repairLinks đã sửa
+        std::vector<Song*> songs;       // SongService sở hữu và delete
         std::vector<Artist*> artists;
         std::vector<Album*> albums;
-        // HashTable giúp tìm đối tượng nhanh bằng ID
         HashTable<std::string, Song*> songById;
         HashTable<std::string, Artist*> artistById;
         HashTable<std::string, Album*> albumById;
-
-        static bool containsText(const std::string& text, const std::string& keywordLower);
-        static bool isValidDate(const std::string& date);
+        static bool containsText(const std::string& text, const std::string& keywordKey);   // keywordKey = textutil::foldKey(...)
+        static bool isValidDate(const std::string& date);   // yyyy-mm-dd hoặc rỗng
         static std::string noPermission();
+        bool repairLinks();   // sửa dữ liệu cũ: đổi tên nghệ sĩ/album thành id, đồng bộ tracklist; true nếu có thay đổi
     public:
         SongService(const std::string& root, AuthService& auth);
         ~SongService();
         SongService(const SongService&) = delete;
         SongService& operator=(const SongService&) = delete;
-        void load(); // Nạp dữ liệu từ file
+        void load();
 
+        // Tra cứu theo id
         Song* findSong(const std::string& id) const;
         Artist* findArtist(const std::string& id) const;
         Album* findAlbum(const std::string& id) const;
 
-        SongInfo toInfo(const Song& song, bool withPath = false) const;
-        ArtistInfo toInfo(const Artist& artist) const;
-        AlbumInfo toInfo(const Album& album) const;
-        std::vector<SongInfo> toInfos(const std::vector<std::string>& songIds) const;
+        // Đổi sang DTO cho UI
+        SongInfo toInfo(const Song& s, bool withPath = false) const;   // withPath = true mới dò file nhạc thật trên đĩa
+        ArtistInfo toInfo(const Artist& a) const;
+        AlbumInfo toInfo(const Album& a) const;
+        std::vector<SongInfo> toInfos(const std::vector<std::string>& songIds) const; // giữ thứ tự, bỏ id không tồn tại
 
+        // Danh sách và tìm kiếm
         std::vector<SongInfo> getAllSongs() const;
         std::vector<ArtistInfo> getAllArtists() const;
         std::vector<AlbumInfo> getAllAlbums() const;
@@ -63,749 +70,614 @@ class SongService{
         std::vector<SongInfo> songsOfAlbum(const std::string& idAlbum) const;
         std::vector<AlbumInfo> albumsOfArtist(const std::string& idArtist) const;
 
-        std::string addSong(const std::string& name, const std::string& idArtist, const std::string& idAlbum,
-                            const std::string& type, int durationSec, const std::string& dateRelease, const std::string& sourceFilePath);
-        std::string updateSong(const std::string& id, const std::string& name, const std::string& idArtist, const std::string& idAlbum, 
+        // Chỉ Admin
+        std::string addSong(const std::string& name, const std::string& idArtist, const std::string& idAlbum, const std::string& type,
+                            int durationSec, const std::string& dateRelease, const std::string& sourceFilePath);
+        std::string updateSong(const std::string& id, const std::string& name, const std::string& idArtist, const std::string& idAlbum,
                                const std::string& type, int durationSec, const std::string& dateRelease);
-        std::string removeSong(const std::string& id);
+        std::string removeSong(const std::string& id);     // chỉ xóa trong danh mục, việc dọn playlist/người dùng do MusicSystem làm
         std::string addArtist(const std::string& name, const std::string& country);
-        std::string removeArtist(const std::string& id);
+        std::string removeArtist(const std::string& id);   // từ chối nếu nghệ sĩ còn bài hát hoặc album
         std::string addAlbum(const std::string& name, const std::string& idArtist, const std::string& dateRelease);
-        std::string removeAlbum(const std::string& id);
+        std::string removeAlbum(const std::string& id);    // các bài trong album được gỡ khỏi album, không bị xóa
+        std::string setAlbumSongs(const std::string& idAlbum, const std::vector<std::string>& songIds); // đặt toàn bộ tracklist (theo thứ tự)
 
+        // Ghi file
         bool saveSongs();
         bool saveArtists();
         bool saveAlbums();
-        void increasePlays(const std::string& idSong);
+        void increasePlays(const std::string& idSong);     // +1 lượt nghe rồi ghi file
 
         int songCount() const;
         int artistCount() const;
         int albumCount() const;
         long long totalPlays() const;
 };
-SongService::SongService(const std::string& root, AuthService& auth) : songDao(root), artistDao(root), albumDao(root), auth(auth){
+
+SongService::SongService(const std::string& root, AuthService& auth)
+    : songDao(root), artistDao(root), albumDao(root), auth(auth), logPath(root + "/data/repair_log.txt"){
 }
 SongService::~SongService(){
-    for (Song* song : songs){
-        delete song;
-    }
-    for (Artist* artist : artists){
-        delete artist;
-    }
-    for (Album* album : albums){
-        delete album;
-    }
+    for (Song* s : this->songs) delete s;
+    for (Artist* a : this->artists) delete a;
+    for (Album* al : this->albums) delete al;
 }
-bool SongService::containsText(const std::string& text, const std::string& keywordLower){
-    std::string textLower = textutil::lower(text);
-    if (textLower.find(keywordLower) != std::string::npos){
-        return true;
-    }
-    return false;
+bool SongService::containsText(const std::string& text, const std::string& keywordKey){
+    return textutil::foldKey(text).find(keywordKey) != std::string::npos;   // tìm không phân biệt dấu, hoa thường
 }
-bool SongService::isValidDate(const std::string& date){ // Kiểm tra ngày có đúng định dạng yyyy-mm-dd hay không
-    if (date.empty()){ // Cho phép ngày rỗng
-        return true;
+bool SongService::isValidDate(const std::string& date){
+    if (date.empty()) return true;
+    if (date.size() != 10 || date[4] != '-' || date[7] != '-') return false;
+    for (size_t i = 0; i < date.size(); ++i){
+        if (i == 4 || i == 7) continue;
+        if (date[i] < '0' || date[i] > '9') return false;
     }
-    if (date.size() != 10){ // Ngày phải có đúng 10 ký tự
-        return false;
-    }
-    if (date[4] != '-' || date[7] != '-'){ // Vị trí dấu phân cách phải là '-'
-        return false;
-    }
-    // Kiểm tra các vị trí còn lại phải là chữ số
-    for (size_t i = 0; i < date.size(); i++){
-        if (i == 4 || i == 7){
-            continue;
-        }
-        if (date[i] < '0' || date[i] > '9'){
-            return false;
-        }
-    }
-    // Lấy tháng và ngày
     int month = std::stoi(date.substr(5, 2));
     int day = std::stoi(date.substr(8, 2));
-    // Kiểm tra phạm vi tháng và ngày
-    if (month < 1 || month > 12){
-        return false;
-    }
-    if (day < 1 || day > 31){
-        return false;
-    }
-    return true;
+    return month >= 1 && month <= 12 && day >= 1 && day <= 31;
 }
-std::string SongService::noPermission(){ // Trả về thông báo khi người dùng không có quyền Admin
-    return "Chi Admin moi co quyen thuc hien thao tac nay";
+std::string SongService::noPermission(){
+    return "Chỉ Admin mới có quyền thực hiện thao tác này";
 }
+
 void SongService::load(){
-    // Xóa dữ liệu cũ trước khi nạp lại
-    for (Song* song : songs){
-        delete song;
+    for (Song* s : this->songs) delete s;
+    for (Artist* a : this->artists) delete a;
+    for (Album* al : this->albums) delete al;
+    this->songs.clear(); this->artists.clear(); this->albums.clear();
+    this->songById.clear(); this->artistById.clear(); this->albumById.clear();
+    for (Song* s : this->songDao.loadAll()){
+        if (this->songById.contains(s->getIdSong())){ delete s; continue; }
+        this->songs.push_back(s);
+        this->songById.insert(s->getIdSong(), s);
     }
-    for (Artist* artist : artists){
-        delete artist;
+    for (Artist* a : this->artistDao.loadAll()){
+        if (this->artistById.contains(a->getIdArtist())){ delete a; continue; }
+        this->artists.push_back(a);
+        this->artistById.insert(a->getIdArtist(), a);
     }
-    for (Album* album : albums){
-        delete album;
+    for (Album* al : this->albumDao.loadAll()){
+        if (this->albumById.contains(al->getIdAlbum())){ delete al; continue; }
+        this->albums.push_back(al);
+        this->albumById.insert(al->getIdAlbum(), al);
     }
-    songs.clear();
-    artists.clear();
-    albums.clear();
-    songById.clear();
-    artistById.clear();
-    albumById.clear();
-    // Nạp danh sách bài hát
-    std::vector<Song*> loadedSongs = songDao.loadAll();
-    for (Song* song : loadedSongs){
-        std::string id = song->getIdSong();
-        // Nếu ID đã tồn tại thì bỏ qua bản ghi trùng
-        if (songById.contains(id)){
-            delete song;
-            continue;
-        }
-        songs.push_back(song);
-        songById.insert(id, song);
-    }
-    // Nạp danh sách nghệ sĩ
-    std::vector<Artist*> loadedArtists = artistDao.loadAll();
-    for (Artist* artist : loadedArtists){
-        std::string id = artist->getIdArtist();
-        if (artistById.contains(id)){
-            delete artist;
-            continue;
-        }
-        artists.push_back(artist);
-        artistById.insert(id, artist);
-    }
-    // Nạp danh sách album
-    std::vector<Album*> loadedAlbums = albumDao.loadAll();
-    for (Album* album : loadedAlbums){
-        std::string id = album->getIdAlbum();
-        if (albumById.contains(id)){
-            delete album;
-            continue;
-        }
-        albums.push_back(album);
-        albumById.insert(id, album);
+    if (this->repairLinks()){   // dữ liệu cũ (lưu tên thay vì id) được tự động sửa và ghi lại
+        this->saveSongs();
+        this->saveArtists();
+        this->saveAlbums();
     }
 }
-Song* SongService::findSong(const std::string& id) const{
-    Song* song = nullptr;
-    bool found = songById.search(id, song);
-    if (found){
-        return song;
+bool SongService::repairLinks(){
+    bool changed = false;
+    std::vector<std::string> log;
+    auto key = [](const std::string& s){ return textutil::foldKey(s); };
+    auto artistByName = [this, &key](const std::string& name) -> Artist*{
+        for (Artist* a : this->artists){
+            if (key(a->getNameArtist()) == key(name)) return a;
+        }
+        return nullptr;
+    };
+    auto albumByName = [this, &key](const std::string& name) -> Album*{
+        for (Album* al : this->albums){
+            if (key(al->getNameAlbum()) == key(name)) return al;
+        }
+        return nullptr;
+    };
+    auto createArtist = [this](const std::string& name) -> Artist*{
+        std::vector<std::string> ids;
+        for (Artist* a : this->artists) ids.push_back(a->getIdArtist());
+        Artist* a = new Artist(textutil::nextId(ids, "A"), textutil::trim(name), "", 0);
+        this->artists.push_back(a);
+        this->artistById.insert(a->getIdArtist(), a);
+        return a;
+    };
+    auto createAlbum = [this](const std::string& name, const std::string& idArtist, const std::string& date) -> Album*{
+        std::vector<std::string> ids;
+        for (Album* al : this->albums) ids.push_back(al->getIdAlbum());
+        Album* al = new Album(textutil::nextId(ids, "AL"), textutil::trim(name), idArtist, date);
+        this->albums.push_back(al);
+        this->albumById.insert(al->getIdAlbum(), al);
+        return al;
+    };
+
+    // 0) Gộp các nghệ sĩ trùng tên (giữ bản nằm trước trong artists.txt)
+    for (size_t i = 0; i < this->artists.size(); ++i){
+        for (size_t j = i + 1; j < this->artists.size();){
+            Artist* keep = this->artists[i];
+            Artist* dup = this->artists[j];
+            if (key(keep->getNameArtist()).empty() || key(keep->getNameArtist()) != key(dup->getNameArtist())){
+                ++j;
+                continue;
+            }
+            for (Song* s : this->songs){
+                if (s->getIdArtist() == dup->getIdArtist()) s->setIdArtist(keep->getIdArtist());
+            }
+            for (Album* al : this->albums){
+                if (al->getIdArtist() == dup->getIdArtist()) al->setIdArtist(keep->getIdArtist());
+            }
+            if (dup->getFollowers() > keep->getFollowers()) keep->setFollowers(dup->getFollowers());
+            if (keep->getCountry().empty()) keep->setCountry(dup->getCountry());
+            log.push_back("Gộp nghệ sĩ trùng " + dup->getIdArtist() + " \"" + dup->getNameArtist() + "\" vào " + keep->getIdArtist());
+            this->artistById.remove(dup->getIdArtist());
+            this->artists.erase(this->artists.begin() + j);
+            delete dup;
+            changed = true;
+        }
     }
-    return nullptr;
+    // 0b) Gộp các album trùng tên và cùng nghệ sĩ
+    for (size_t i = 0; i < this->albums.size(); ++i){
+        for (size_t j = i + 1; j < this->albums.size();){
+            Album* keep = this->albums[i];
+            Album* dup = this->albums[j];
+            bool sameName = !key(keep->getNameAlbum()).empty() && key(keep->getNameAlbum()) == key(dup->getNameAlbum());
+            bool sameArtist = keep->getIdArtist() == dup->getIdArtist() || this->findArtist(keep->getIdArtist()) == nullptr || this->findArtist(dup->getIdArtist()) == nullptr;
+            if (!sameName || !sameArtist){
+                ++j;
+                continue;
+            }
+            for (Song* s : this->songs){
+                if (s->getIdAlbum() == dup->getIdAlbum()) s->setIdAlbum(keep->getIdAlbum());
+            }
+            std::vector<std::string> ids = dup->getSongIds();
+            for (const std::string& sid : ids) keep->addSong(sid);
+            log.push_back("Gộp album trùng " + dup->getIdAlbum() + " \"" + dup->getNameAlbum() + "\" vào " + keep->getIdAlbum());
+            this->albumById.remove(dup->getIdAlbum());
+            this->albums.erase(this->albums.begin() + j);
+            delete dup;
+            changed = true;
+        }
+    }
+    // 1) Bài hát: cột nghệ sĩ / album đang là tên -> đổi thành id (không có thì tạo mới)
+    for (Song* s : this->songs){
+        std::string rawArtist = textutil::trim(s->getIdArtist());
+        if (!rawArtist.empty() && this->findArtist(rawArtist) == nullptr){
+            Artist* a = artistByName(rawArtist);
+            if (a == nullptr){
+                a = createArtist(rawArtist);
+                log.push_back("Tạo nghệ sĩ mới " + a->getIdArtist() + " \"" + a->getNameArtist() + "\" (từ bài " + s->getIdSong() + ")");
+            }
+            log.push_back("Bài " + s->getIdSong() + ": nghệ sĩ \"" + rawArtist + "\" -> " + a->getIdArtist());
+            s->setIdArtist(a->getIdArtist());
+            changed = true;
+        }
+        std::string rawAlbum = textutil::trim(s->getIdAlbum());
+        if (!rawAlbum.empty() && this->findAlbum(rawAlbum) == nullptr){
+            Album* al = albumByName(rawAlbum);
+            if (al == nullptr){
+                al = createAlbum(rawAlbum, s->getIdArtist(), s->getDateRelease());
+                log.push_back("Tạo album mới " + al->getIdAlbum() + " \"" + al->getNameAlbum() + "\" (từ bài " + s->getIdSong() + ")");
+            }
+            log.push_back("Bài " + s->getIdSong() + ": album \"" + rawAlbum + "\" -> " + al->getIdAlbum());
+            s->setIdAlbum(al->getIdAlbum());
+            changed = true;
+        }
+    }
+    // 2) Album chưa có nghệ sĩ hợp lệ: đổi tên thành id, hoặc lấy theo nghệ sĩ của bài hát trong album
+    for (Album* al : this->albums){
+        if (this->findArtist(al->getIdArtist()) != nullptr) continue;
+        std::string raw = textutil::trim(al->getIdArtist());
+        Artist* a = raw.empty() ? nullptr : artistByName(raw);
+        if (a == nullptr){
+            for (Song* s : this->songs){
+                if (s->getIdAlbum() == al->getIdAlbum() && this->findArtist(s->getIdArtist()) != nullptr){
+                    a = this->findArtist(s->getIdArtist());
+                    break;
+                }
+            }
+        }
+        if (a == nullptr && !raw.empty()){
+            a = createArtist(raw);
+            log.push_back("Tạo nghệ sĩ mới " + a->getIdArtist() + " \"" + a->getNameArtist() + "\" (từ album " + al->getIdAlbum() + ")");
+        }
+        if (a != nullptr){
+            log.push_back("Album " + al->getIdAlbum() + ": nghệ sĩ \"" + raw + "\" -> " + a->getIdArtist());
+            al->setIdArtist(a->getIdArtist());
+            changed = true;
+        }
+    }
+    // 3) Tracklist của album phải khớp với Song::id_album
+    for (Album* al : this->albums){
+        std::vector<std::string> bad;
+        for (const std::string& sid : al->getSongIds()){
+            Song* s = this->findSong(sid);
+            if (s == nullptr){
+                bad.push_back(sid);                                  // bài không tồn tại
+            } else if (s->getIdAlbum().empty()){
+                s->setIdAlbum(al->getIdAlbum());                     // bài chưa ghi album nhưng nằm trong tracklist
+                log.push_back("Bài " + sid + ": gán vào album " + al->getIdAlbum() + " theo tracklist");
+                changed = true;
+            } else if (s->getIdAlbum() != al->getIdAlbum()){
+                bad.push_back(sid);                                  // bài thuộc album khác
+            }
+        }
+        for (const std::string& sid : bad){
+            al->removeSong(sid);
+            log.push_back("Album " + al->getIdAlbum() + ": bỏ " + sid + " khỏi tracklist");
+            changed = true;
+        }
+    }
+    for (Song* s : this->songs){
+        Album* al = this->findAlbum(s->getIdAlbum());
+        if (al != nullptr && al->addSong(s->getIdSong())) changed = true;   // bài có album nhưng chưa nằm trong tracklist
+    }
+    if (!log.empty()){
+        std::ofstream out(this->logPath, std::ios::app);
+        for (const std::string& line : log) out << line << '\n';
+    }
+    return changed;
+}
+
+Song* SongService::findSong(const std::string& id) const{
+    Song* s = nullptr;
+    return this->songById.search(id, s) ? s : nullptr;
 }
 Artist* SongService::findArtist(const std::string& id) const{
-    Artist* artist = nullptr;
-    bool found = artistById.search(id, artist);
-    if (found){
-        return artist;
-    }
-    return nullptr;
+    Artist* a = nullptr;
+    return this->artistById.search(id, a) ? a : nullptr;
 }
 Album* SongService::findAlbum(const std::string& id) const{
-    Album* album = nullptr;
-    bool found = albumById.search(id, album);
-    if (found){
-        return album;
-    }
-    return nullptr;
+    Album* al = nullptr;
+    return this->albumById.search(id, al) ? al : nullptr;
 }
-SongInfo SongService::toInfo(const Song& song, bool withPath) const{ // Chuyển đối tượng Song thành SongInfo
-    SongInfo info;
-    info.id = song.getIdSong();
-    info.name = song.getName();
-    info.idArtist = song.getIdArtist();
-    info.idAlbum = song.getIdAlbum();
-    // Tìm tên nghệ sĩ
-    Artist* artist = findArtist(info.idArtist);
-    if (artist != nullptr){
-        info.artist = artist->getNameArtist();
-    } else{
-        info.artist = "Khong ro";
-    }
-    // Tìm tên album
-    Album* album = findAlbum(info.idAlbum);
-    if (album != nullptr){
-        info.album = album->getNameAlbum();
-    } else{
-        info.album = "";
-    }
-    info.type = song.getTypeSong();
-    info.date = song.getDateRelease();
-    info.duration = song.getDuration();
-    info.plays = song.getPlays();
-    // Kiểm tra người dùng hiện tại đã thích bài hát chưa
-    Listener* listener = auth.currentListener();
-    if (listener != nullptr){
-        info.liked = listener->isLiked(info.id);
-    } else{
-        info.liked = false;
-    }
-    // Chỉ lấy đường dẫn file nhạc khi withPath = true
-    if (withPath){
-        info.path = songDao.resolveAudioPath(song);
-    }
-    return info;
+
+SongInfo SongService::toInfo(const Song& s, bool withPath) const{
+    SongInfo i;
+    i.id = s.getIdSong();
+    i.name = s.getName();
+    i.idArtist = s.getIdArtist();
+    i.idAlbum = s.getIdAlbum();
+    Artist* a = this->findArtist(i.idArtist);
+    i.artist = (a != nullptr) ? a->getNameArtist() : "Không rõ";
+    Album* al = this->findAlbum(i.idAlbum);
+    i.album = (al != nullptr) ? al->getNameAlbum() : "";
+    i.type = s.getTypeSong();
+    i.date = s.getDateRelease();
+    i.duration = s.getDuration();
+    i.plays = s.getPlays();
+    Listener* l = this->auth.currentListener();
+    i.liked = (l != nullptr) && l->isLiked(i.id);
+    if (withPath) i.path = this->songDao.resolveAudioPath(s);
+    return i;
 }
-ArtistInfo SongService::toInfo(const Artist& artist) const{ // Chuyển đối tượng Artist thành ArtistInfo
-    ArtistInfo info;
-    info.id = artist.getIdArtist();
-    info.name = artist.getNameArtist();
-    info.country = artist.getCountry();
-    info.followers = artist.getFollowers();
-    // Đếm số bài hát của nghệ sĩ
-    for (Song* song : songs){
-        if (song->getIdArtist() == info.id){
-            info.songCount++;
-        }
+ArtistInfo SongService::toInfo(const Artist& a) const{
+    ArtistInfo i;
+    i.id = a.getIdArtist();
+    i.name = a.getNameArtist();
+    i.country = a.getCountry();
+    i.followers = a.getFollowers();
+    for (Song* s : this->songs){
+        if (s->getIdArtist() == i.id) i.songCount++;
     }
-    // Kiểm tra người dùng hiện tại đã theo dõi nghệ sĩ chưa
-    Listener* listener = auth.currentListener();
-    if (listener != nullptr){
-        info.followed = listener->isFollowing(info.id);
-    } else{
-        info.followed = false;
-    }
-    return info;
+    Listener* l = this->auth.currentListener();
+    i.followed = (l != nullptr) && l->isFollowing(i.id);
+    return i;
 }
-AlbumInfo SongService::toInfo(const Album& album) const{ // Chuyển đối tượng Album thành AlbumInfo
-    AlbumInfo info;
-    info.id = album.getIdAlbum();
-    info.name = album.getNameAlbum();
-    info.idArtist = album.getIdArtist();
-    // Tìm tên nghệ sĩ của album
-    Artist* artist = findArtist(info.idArtist);
-    if (artist != nullptr){
-        info.artist = artist->getNameArtist();
-    } else{
-        info.artist = "Không rõ";
+AlbumInfo SongService::toInfo(const Album& al) const{
+    AlbumInfo i;
+    i.id = al.getIdAlbum();
+    i.name = al.getNameAlbum();
+    i.idArtist = al.getIdArtist();
+    Artist* a = this->findArtist(i.idArtist);
+    i.artist = (a != nullptr) ? a->getNameArtist() : "Không rõ";
+    i.date = al.getDateRelease();
+    i.trackCount = al.getTrackCount();
+    for (const auto& id : al.getSongIds()){
+        Song* s = this->findSong(id);
+        if (s != nullptr) i.totalSeconds += s->getDuration();
     }
-    info.date = album.getDateRelease();
-    info.trackCount = album.getTrackCount();
-    // Tính tổng thời lượng các bài hát trong album
-    for (const std::string& id : album.getSongIds()){
-        Song* song = findSong(id);
-        if (song != nullptr){
-            info.totalSeconds += song->getDuration();
-        }
-    }
-    return info;
+    return i;
 }
-std::vector<SongInfo> SongService::toInfos(const std::vector<std::string>& songIds) const{ // Chuyển danh sách ID bài hát thành danh sách SongInfo
+std::vector<SongInfo> SongService::toInfos(const std::vector<std::string>& songIds) const{
     std::vector<SongInfo> result;
-    for (const std::string& id : songIds){
-        Song* song = findSong(id);
-        // Chỉ thêm bài hát nếu tìm thấy
-        if (song != nullptr){
-            result.push_back(toInfo(*song));
-        }
+    for (const auto& id : songIds){
+        Song* s = this->findSong(id);
+        if (s != nullptr) result.push_back(this->toInfo(*s));
     }
     return result;
 }
-std::vector<SongInfo> SongService::getAllSongs() const {
-    // Tạo bản sao danh sách con trỏ để sắp xếp
-    std::vector<Song*> sortedSongs = songs;
-    // Sắp xếp theo tên bài hát
-    std::sort(sortedSongs.begin(), sortedSongs.end(), [](Song* a, Song* b){
-            return textutil::lower(a->getName()) < textutil::lower(b->getName());
-        }
-    );
+
+std::vector<SongInfo> SongService::getAllSongs() const{
+    std::vector<Song*> v = this->songs;
+    std::sort(v.begin(), v.end(), [](Song* a, Song* b){ return textutil::lower(a->getName()) < textutil::lower(b->getName()); });
     std::vector<SongInfo> result;
-    for (Song* song : sortedSongs){
-        result.push_back(toInfo(*song));
-    }
+    for (Song* s : v) result.push_back(this->toInfo(*s));
     return result;
 }
 std::vector<ArtistInfo> SongService::getAllArtists() const{
-    std::vector<Artist*> sortedArtists = artists;
-    // Sắp xếp nghệ sĩ theo tên
-    std::sort(sortedArtists.begin(), sortedArtists.end(), [](Artist* a, Artist* b){
-            return textutil::lower(a->getNameArtist()) < textutil::lower(b->getNameArtist());
-        }
-    );
+    std::vector<Artist*> v = this->artists;
+    std::sort(v.begin(), v.end(), [](Artist* a, Artist* b){ return textutil::lower(a->getNameArtist()) < textutil::lower(b->getNameArtist()); });
     std::vector<ArtistInfo> result;
-    for (Artist* artist : sortedArtists){
-        result.push_back(toInfo(*artist));
-    }
+    for (Artist* a : v) result.push_back(this->toInfo(*a));
     return result;
 }
 std::vector<AlbumInfo> SongService::getAllAlbums() const{
-    std::vector<Album*> sortedAlbums = albums;
-    // Album mới hơn được đưa lên trước
-    std::sort(sortedAlbums.begin(), sortedAlbums.end(), [](Album* a, Album* b){
-            return a->getDateRelease() > b->getDateRelease();
-        }
-    );
+    std::vector<Album*> v = this->albums;
+    std::sort(v.begin(), v.end(), [](Album* a, Album* b){ return a->getDateRelease() > b->getDateRelease(); });
     std::vector<AlbumInfo> result;
-    for (Album* album : sortedAlbums){
-        result.push_back(toInfo(*album));
-    }
+    for (Album* al : v) result.push_back(this->toInfo(*al));
     return result;
 }
+
 std::vector<SongInfo> SongService::searchSongs(const std::string& keyword) const{
     std::vector<SongInfo> result;
-    // Chuẩn hóa từ khóa tìm kiếm
-    std::string key = textutil::lower(textutil::trim(keyword));
-    if (key.empty()){
-        return result;
-    }
-    for (Song* song : songs){
-        SongInfo info = toInfo(*song);
-        // Tìm theo tên bài hát, nghệ sĩ, album hoặc thể loại
-        if (containsText(info.name, key) || containsText(info.artist, key) || containsText(info.album, key) || containsText(info.type, key)){
-            result.push_back(info);
-        }
+    std::string k = textutil::foldKey(textutil::trim(keyword));
+    if (k.empty()) return result;
+    for (Song* s : this->songs){
+        SongInfo i = this->toInfo(*s);
+        if (containsText(i.name, k) || containsText(i.artist, k) || containsText(i.album, k) || containsText(i.type, k))
+            result.push_back(i);
     }
     return result;
 }
 std::vector<ArtistInfo> SongService::searchArtists(const std::string& keyword) const{
     std::vector<ArtistInfo> result;
-    std::string key = textutil::lower(textutil::trim(keyword));
-    if (key.empty()){
-        return result;
-    }
-    for (Artist* artist : artists){
-        // Tìm theo tên nghệ sĩ hoặc quốc gia
-        if (containsText(artist->getNameArtist(), key) || containsText(artist->getCountry(), key)){
-            result.push_back(toInfo(*artist));
-        }
+    std::string k = textutil::foldKey(textutil::trim(keyword));
+    if (k.empty()) return result;
+    for (Artist* a : this->artists){
+        if (containsText(a->getNameArtist(), k) || containsText(a->getCountry(), k)) result.push_back(this->toInfo(*a));
     }
     return result;
 }
 std::vector<AlbumInfo> SongService::searchAlbums(const std::string& keyword) const{
     std::vector<AlbumInfo> result;
-    std::string key = textutil::lower(textutil::trim(keyword));
-    if (key.empty()){
-        return result;
-    }
-    for (Album* album : albums){
-        AlbumInfo info = toInfo(*album);
-        // Tìm theo tên album hoặc tên nghệ sĩ
-        if (containsText(info.name, key) || containsText(info.artist, key)){
-            result.push_back(info);
-        }
+    std::string k = textutil::foldKey(textutil::trim(keyword));
+    if (k.empty()) return result;
+    for (Album* al : this->albums){
+        AlbumInfo i = this->toInfo(*al);
+        if (containsText(i.name, k) || containsText(i.artist, k)) result.push_back(i);
     }
     return result;
 }
+
 std::vector<SongInfo> SongService::topSongs(int n) const{
     std::vector<SongInfo> result;
-    if (n <= 0){
-        return result;
-    }
-    std::vector<Song*> sortedSongs = songs; // Tạo bản sao danh sách bài hát
-    int count = std::min(n, (int)sortedSongs.size()); // Số lượng bài hát cần lấy
-    // Sắp xếp các bài hát có lượt nghe cao nhất lên đầu
-    std::partial_sort(sortedSongs.begin(), sortedSongs.begin() + count, sortedSongs.end(), SongPlaysComparator());
-    for (int i = 0; i < count; i++){
-        result.push_back(toInfo(*sortedSongs[i]));
-    }
+    if (n <= 0) return result;
+    std::vector<Song*> v = this->songs;
+    int k = std::min(n, (int)v.size());
+    std::partial_sort(v.begin(), v.begin() + k, v.end(), SongPlaysComparator()); // nhiều lượt nghe nhất đứng đầu
+    for (int i = 0; i < k; ++i) result.push_back(this->toInfo(*v[i]));
     return result;
 }
 std::vector<ArtistInfo> SongService::topArtists(int n) const{
     std::vector<ArtistInfo> result;
-    if (n <= 0){
-        return result;
-    }
-    std::vector<Artist*> sortedArtists = artists;
-    int count = std::min(n, (int)sortedArtists.size());
-    // Sắp xếp nghệ sĩ có nhiều người theo dõi nhất lên đầu
-    std::partial_sort(sortedArtists.begin(), sortedArtists.begin() + count, sortedArtists.end(), ArtistFollowersComparator());
-    for (int i = 0; i < count; i++){
-        result.push_back(toInfo(*sortedArtists[i]));
-    }
+    if (n <= 0) return result;
+    std::vector<Artist*> v = this->artists;
+    int k = std::min(n, (int)v.size());
+    std::partial_sort(v.begin(), v.begin() + k, v.end(), ArtistFollowersComparator());
+    for (int i = 0; i < k; ++i) result.push_back(this->toInfo(*v[i]));
     return result;
 }
 std::vector<SongInfo> SongService::newestSongs(int n) const{
     std::vector<SongInfo> result;
-    if (n <= 0){
-        return result;
-    }
-    std::vector<Song*> sortedSongs = songs;
-    int count = std::min(n, (int)sortedSongs.size());
-    // Sắp xếp theo ngày phát hành mới nhất
-    std::partial_sort(sortedSongs.begin(), sortedSongs.begin() + count, sortedSongs.end(), [](Song* a, Song* b){
-            return a->getDateRelease() > b->getDateRelease();
-        }
-    );
-    for (int i = 0; i < count; i++){
-        result.push_back(toInfo(*sortedSongs[i]));
-    }
+    if (n <= 0) return result;
+    std::vector<Song*> v = this->songs;
+    int k = std::min(n, (int)v.size());
+    std::partial_sort(v.begin(), v.begin() + k, v.end(), [](Song* a, Song* b){ return a->getDateRelease() > b->getDateRelease(); });
+    for (int i = 0; i < k; ++i) result.push_back(this->toInfo(*v[i]));
     return result;
 }
 std::vector<std::string> SongService::genres() const{
     std::vector<std::string> result;
-    for (Song* song : songs){
-        std::string type = song->getTypeSong();
-        if (!type.empty()){
-            result.push_back(type);
-        }
+    for (Song* s : this->songs){
+        if (!s->getTypeSong().empty()) result.push_back(s->getTypeSong());
     }
-    std::sort(result.begin(), result.end()); // Sắp xếp danh sách thể loại
-    result.erase(std::unique(result.begin(), result.end()), result.end()); // Xóa các thể loại bị trùng
+    std::sort(result.begin(), result.end());
+    result.erase(std::unique(result.begin(), result.end()), result.end());
     return result;
 }
 std::vector<SongInfo> SongService::songsByGenre(const std::string& genre) const{
-    std::vector<Song*> selectedSongs;
-    std::string selectedGenre = textutil::lower(genre);
-    for (Song* song : songs){
-        std::string type = textutil::lower(song->getTypeSong());
-        if (type == selectedGenre){
-            selectedSongs.push_back(song);
-        }
+    std::vector<Song*> v;
+    std::string g = textutil::lower(genre);
+    for (Song* s : this->songs){
+        if (textutil::lower(s->getTypeSong()) == g) v.push_back(s);
     }
-    // Sắp xếp theo lượt nghe giảm dần
-    std::sort(selectedSongs.begin(), selectedSongs.end(), SongPlaysComparator());
+    std::sort(v.begin(), v.end(), SongPlaysComparator());
     std::vector<SongInfo> result;
-    for (Song* song : selectedSongs){
-        result.push_back(toInfo(*song));
-    }
+    for (Song* s : v) result.push_back(this->toInfo(*s));
     return result;
 }
 std::vector<SongInfo> SongService::songsOfArtist(const std::string& idArtist) const{
-    std::vector<Song*> selectedSongs;
-    for (Song* song : songs){
-        if (song->getIdArtist() == idArtist){
-            selectedSongs.push_back(song);
-        }
+    std::vector<Song*> v;
+    for (Song* s : this->songs){
+        if (s->getIdArtist() == idArtist) v.push_back(s);
     }
-    // Sắp xếp theo lượt nghe giảm dần
-    std::sort(selectedSongs.begin(), selectedSongs.end(), SongPlaysComparator());
+    std::sort(v.begin(), v.end(), SongPlaysComparator());
     std::vector<SongInfo> result;
-    for (Song* song : selectedSongs){
-        result.push_back(toInfo(*song));
-    }
+    for (Song* s : v) result.push_back(this->toInfo(*s));
     return result;
 }
 std::vector<SongInfo> SongService::songsOfAlbum(const std::string& idAlbum) const{
-    Album* album = findAlbum(idAlbum);
-    // Không tìm thấy album
-    if (album == nullptr){
-        return std::vector<SongInfo>();
-    }
-    // Chuyển danh sách ID bài hát trong album thành SongInfo
-    // Thứ tự bài hát được giữ nguyên theo tracklist
-    return toInfos(album->getSongIds());
+    Album* al = this->findAlbum(idAlbum);
+    if (al == nullptr) return std::vector<SongInfo>();
+    return this->toInfos(al->getSongIds()); // đúng thứ tự track
 }
 std::vector<AlbumInfo> SongService::albumsOfArtist(const std::string& idArtist) const{
-    std::vector<Album*> selectedAlbums;
-    // Tìm các album thuộc nghệ sĩ
-    for (Album* album : albums){
-        if (album->getIdArtist() == idArtist){
-            selectedAlbums.push_back(album);
-        }
+    std::vector<Album*> v;
+    for (Album* al : this->albums){
+        if (al->getIdArtist() == idArtist) v.push_back(al);
     }
-    // Sắp xếp album mới nhất lên trước
-    std::sort(selectedAlbums.begin(), selectedAlbums.end(), [](Album* a, Album* b){
-            return a->getDateRelease() > b->getDateRelease();
-        }
-    );
+    std::sort(v.begin(), v.end(), [](Album* a, Album* b){ return a->getDateRelease() > b->getDateRelease(); });
     std::vector<AlbumInfo> result;
-    for (Album* album : selectedAlbums){
-        result.push_back(toInfo(*album));
-    }
+    for (Album* al : v) result.push_back(this->toInfo(*al));
     return result;
 }
+
 std::string SongService::addSong(const std::string& name, const std::string& idArtist, const std::string& idAlbum, const std::string& type,
                                  int durationSec, const std::string& dateRelease, const std::string& sourceFilePath){
-    if (!auth.isAdmin()){ // Chỉ Admin mới được thêm bài hát
-        return noPermission();
-    }
-    // Loại bỏ khoảng trắng thừa
-    std::string songName = textutil::trim(name);
-    std::string songType = textutil::trim(type);
-    std::string releaseDate = textutil::trim(dateRelease);
-    if (songName.empty()){
-        return "Ten bai hat khong duoc de trong";
-    }
-    if (!textutil::isSafeText(songName) || !textutil::isSafeText(songType)){
-        return "Khong duoc dung ky tu '|' trong ten hoac the loai";
-    }
-    // Kiểm tra nghệ sĩ
-    if (findArtist(idArtist) == nullptr){
-        return "Vui long chon nghe si hop le";
-    }
-    // Kiểm tra album nếu có chọn album
-    if (!idAlbum.empty() && findAlbum(idAlbum) == nullptr){
-        return "Album khong ton tai";
-    }
-    if (durationSec <= 0){
-        return "Thoi luong phai lon hon 0";
-    }
-    if (!isValidDate(releaseDate)){
-        return "Ngay phat hanh phai co dang yyyy-mm-dd";
-    }
-    // Nhập file nhạc vào thư mục quản lý
-    std::string storedPath = "";
+    if (!this->auth.isAdmin()) return noPermission();
+    std::string n = textutil::trim(name), t = textutil::trim(type), d = textutil::trim(dateRelease);
+    if (n.empty()) return "Tên bài hát không được để trống";
+    if (!textutil::isSafeText(n) || !textutil::isSafeText(t)) return "Không được dùng ký tự '|' trong tên hoặc thể loại";
+    if (this->findArtist(idArtist) == nullptr) return "Vui lòng chọn nghệ sĩ hợp lệ";
+    if (!idAlbum.empty() && this->findAlbum(idAlbum) == nullptr) return "Album không tồn tại";
+    if (durationSec <= 0) return "Thời lượng phải lớn hơn 0";
+    if (!isValidDate(d)) return "Ngày phát hành phải có dạng yyyy-mm-dd";
+    std::string stored = "";
     if (!sourceFilePath.empty()){
-        storedPath = songDao.importAudio(sourceFilePath);
-        if (storedPath.empty()){
-            return "Khong doc hoac sao chep duoc file nhac";
-        }
+        stored = this->songDao.importAudio(sourceFilePath);
+        if (stored.empty()) return "Không đọc hoặc sao chép được file nhạc";
     }
-    // Lấy danh sách ID hiện tại
     std::vector<std::string> ids;
-    for (Song* song : songs){
-        ids.push_back(song->getIdSong());
-    }
-    std::string newId = textutil::nextId(ids, "S"); // Tạo ID mới
-    // Tạo đối tượng Song
-    if (songType.empty()){
-        songType = "Khac";
-    }
-    Song* newSong = new Song(newId, songName, idArtist, idAlbum, songType, durationSec, releaseDate, storedPath, 0);
-    // Thêm vào vector và HashTable
-    songs.push_back(newSong);
-    songById.insert(newId, newSong);
-    // Nếu có album thì thêm bài hát vào album
+    for (Song* s : this->songs) ids.push_back(s->getIdSong());
+    std::string id = textutil::nextId(ids, "S");
+    Song* song = new Song(id, n, idArtist, idAlbum, t.empty() ? "Khác" : t, durationSec, d, stored, 0);
+    this->songs.push_back(song);
+    this->songById.insert(id, song);
     if (!idAlbum.empty()){
-        Album* album = findAlbum(idAlbum);
-        album->addSong(newId);
-        saveAlbums();
+        this->findAlbum(idAlbum)->addSong(id);
+        this->saveAlbums();
     }
-    // Lưu danh sách bài hát
-    if (!saveSongs()){
-        return "Khong ghi duoc file songs.txt";
-    }
+    if (!this->saveSongs()) return "Không ghi được file songs.txt";
     return "";
 }
 std::string SongService::updateSong(const std::string& id, const std::string& name, const std::string& idArtist, const std::string& idAlbum,
                                     const std::string& type, int durationSec, const std::string& dateRelease){
-    if (!auth.isAdmin()){
-        return noPermission();
+    if (!this->auth.isAdmin()) return noPermission();
+    Song* s = this->findSong(id);
+    if (s == nullptr) return "Không tìm thấy bài hát";
+    std::string n = textutil::trim(name), t = textutil::trim(type), d = textutil::trim(dateRelease);
+    if (n.empty()) return "Tên bài hát không được để trống";
+    if (!textutil::isSafeText(n) || !textutil::isSafeText(t)) return "Không được dùng ký tự '|' trong tên hoặc thể loại";
+    if (this->findArtist(idArtist) == nullptr) return "Vui lòng chọn nghệ sĩ hợp lệ";
+    if (!idAlbum.empty() && this->findAlbum(idAlbum) == nullptr) return "Album không tồn tại";
+    if (durationSec <= 0) return "Thời lượng phải lớn hơn 0";
+    if (!isValidDate(d)) return "Ngày phát hành phải có dạng yyyy-mm-dd";
+    if (s->getIdAlbum() != idAlbum){ // đổi album: cập nhật tracklist hai bên
+        Album* oldAlbum = this->findAlbum(s->getIdAlbum());
+        if (oldAlbum != nullptr) oldAlbum->removeSong(id);
+        Album* newAlbum = this->findAlbum(idAlbum);
+        if (newAlbum != nullptr) newAlbum->addSong(id);
+        this->saveAlbums();
     }
-    // Tìm bài hát cần cập nhật
-    Song* song = findSong(id);
-    if (song == nullptr){
-        return "Khong tim thay bai hat";
-    }
-    std::string songName = textutil::trim(name);
-    std::string songType = textutil::trim(type);
-    std::string releaseDate = textutil::trim(dateRelease);
-    if (songName.empty()){
-        return "Ten bai hat khong duoc de trong";
-    }
-    if (!textutil::isSafeText(songName) || !textutil::isSafeText(songType)){
-        return "Khong duoc dung ky tu '|' trong ten hoac the loai";
-    }
-    if (findArtist(idArtist) == nullptr){
-        return "Vui long chon nghe si hop le";
-    }
-    if (!idAlbum.empty() && findAlbum(idAlbum) == nullptr){
-        return "Album khong ton tai";
-    }
-    if (durationSec <= 0){
-        return "Thoi luong phai lon hơn 0";
-    }
-    if (!isValidDate(releaseDate)){
-        return "Ngay phat hanh phai co dang yyyy-mm-dd";
-    }
-    // Nếu đổi album thì cập nhật tracklist của cả hai album
-    if (song->getIdAlbum() != idAlbum){
-        // Xóa bài hát khỏi album cũ
-        Album* oldAlbum = findAlbum(song->getIdAlbum());
-        if (oldAlbum != nullptr){
-            oldAlbum->removeSong(id);
-        }
-        // Thêm bài hát vào album mới
-        Album* newAlbum = findAlbum(idAlbum);
-        if (newAlbum != nullptr){
-            newAlbum->addSong(id);
-        }
-        saveAlbums();
-    }
-    // Cập nhật thông tin bài hát
-    if (songType.empty()){
-        songType = "Khác";
-    }
-    song->setName(songName);
-    song->setIdArtist(idArtist);
-    song->setIdAlbum(idAlbum);
-    song->setTypeSong(songType);
-    song->setDuration(durationSec);
-    song->setDateRelease(releaseDate);
-    // Lưu dữ liệu
-    if (!saveSongs()){
-        return "Khong ghi duoc file songs.txt";
-    }
+    s->setName(n);
+    s->setIdArtist(idArtist);
+    s->setIdAlbum(idAlbum);
+    s->setTypeSong(t.empty() ? "Khác" : t);
+    s->setDuration(durationSec);
+    s->setDateRelease(d);
+    if (!this->saveSongs()) return "Không ghi được file songs.txt";
     return "";
 }
 std::string SongService::removeSong(const std::string& id){
-    if (!auth.isAdmin()){
-        return noPermission();
+    if (!this->auth.isAdmin()) return noPermission();
+    Song* s = this->findSong(id);
+    if (s == nullptr) return "Không tìm thấy bài hát";
+    Album* al = this->findAlbum(s->getIdAlbum());
+    if (al != nullptr){
+        al->removeSong(id);
+        this->saveAlbums();
     }
-    Song* song = findSong(id);
-    if (song == nullptr){
-        return "Khong tim thay bai hat";
-    }
-    // Xóa bài hát khỏi album nếu bài hát thuộc album
-    Album* album = findAlbum(song->getIdAlbum());
-    if (album != nullptr){
-        album->removeSong(id);
-        saveAlbums();
-    }
-    songs.erase(std::remove(songs.begin(), songs.end(), song), songs.end());  // Xóa bài hát khỏi vector
-    songById.remove(id); // Xóa bài hát khỏi HashTable
-    delete song; // Giải phóng bộ nhớ
-    // Lưu dữ liệu
-    if (!saveSongs()){
-        return "Khong ghi duoc file songs.txt";
-    }
+    this->songs.erase(std::remove(this->songs.begin(), this->songs.end(), s), this->songs.end());
+    this->songById.remove(id);
+    delete s;
+    if (!this->saveSongs()) return "Không ghi được file songs.txt";
     return "";
 }
 std::string SongService::addArtist(const std::string& name, const std::string& country){
-    if (!auth.isAdmin()){
-        return noPermission();
+    if (!this->auth.isAdmin()) return noPermission();
+    std::string n = textutil::trim(name), c = textutil::trim(country);
+    if (n.empty()) return "Tên nghệ sĩ không được để trống";
+    if (!textutil::isSafeText(n) || !textutil::isSafeText(c)) return "Không được dùng ký tự '|'";
+    for (Artist* a : this->artists){
+        if (textutil::lower(a->getNameArtist()) == textutil::lower(n)) return "Nghệ sĩ này đã tồn tại";
     }
-    std::string artistName = textutil::trim(name);
-    std::string artistCountry = textutil::trim(country);
-    if (artistName.empty()){
-        return "Ten nghe si khong duoc de trong";
-    }
-    if (!textutil::isSafeText(artistName) || !textutil::isSafeText(artistCountry)){
-        return "Khong duoc dung ky tu '|'";
-    }
-    // Kiểm tra nghệ sĩ đã tồn tại chưa
-    for (Artist* artist : artists){
-        if (textutil::lower(artist->getNameArtist()) == textutil::lower(artistName)){
-            return "Nghe si nay đa ton tai";
-        }
-    }
-    // Lấy danh sách ID hiện tại
     std::vector<std::string> ids;
-    for (Artist* artist : artists){
-        ids.push_back(artist->getIdArtist());
-    }
-    std::string newId = textutil::nextId(ids, "A"); // Tạo ID mới
-    Artist* newArtist = new Artist(newId, artistName, artistCountry, 0); // Tạo đối tượng Artist
-    // Thêm vào vector và HashTable
-    artists.push_back(newArtist);
-    artistById.insert(newId, newArtist);
-    if (!saveArtists()){
-        return "Khong ghi duoc file artists.txt";
-    }
+    for (Artist* a : this->artists) ids.push_back(a->getIdArtist());
+    std::string id = textutil::nextId(ids, "A");
+    Artist* artist = new Artist(id, n, c, 0);
+    this->artists.push_back(artist);
+    this->artistById.insert(id, artist);
+    if (!this->saveArtists()) return "Không ghi được file artists.txt";
     return "";
 }
 std::string SongService::removeArtist(const std::string& id){
-    if (!auth.isAdmin()){
-        return noPermission();
+    if (!this->auth.isAdmin()) return noPermission();
+    Artist* a = this->findArtist(id);
+    if (a == nullptr) return "Không tìm thấy nghệ sĩ";
+    for (Song* s : this->songs){
+        if (s->getIdArtist() == id) return "Nghệ sĩ còn bài hát, hãy xóa hoặc chuyển bài hát trước";
     }
-    Artist* artist = findArtist(id);
-    if (artist == nullptr){
-        return "Khong tim thay nghe si";
+    for (Album* al : this->albums){
+        if (al->getIdArtist() == id) return "Nghệ sĩ còn album, hãy xóa album trước";
     }
-    // Không cho xóa nếu nghệ sĩ vẫn còn bài hát
-    for (Song* song : songs){
-        if (song->getIdArtist() == id){
-            return "Nghe si con bai hat, hay xoa hoac chuyen bai hat truoc";
-        }
-    }
-    // Không cho xóa nếu nghệ sĩ vẫn còn album
-    for (Album* album : albums){
-        if (album->getIdArtist() == id){
-            return "Nghe si con album, hay xoa album truoc";
-        }
-    }
-    artists.erase(std::remove(artists.begin(), artists.end(), artist), artists.end()); // Xóa khỏi vector
-    artistById.remove(id); // Xóa khỏi HashTable
-    delete artist; // Giải phóng bộ nhớ
-    if (!saveArtists()){
-        return "Khong ghi duoc file artists.txt";
-    }
+    this->artists.erase(std::remove(this->artists.begin(), this->artists.end(), a), this->artists.end());
+    this->artistById.remove(id);
+    delete a;
+    if (!this->saveArtists()) return "Không ghi được file artists.txt";
     return "";
 }
 std::string SongService::addAlbum(const std::string& name, const std::string& idArtist, const std::string& dateRelease){
-    if (!auth.isAdmin()){
-        return noPermission();
-    }
-    std::string albumName = textutil::trim(name);
-    std::string releaseDate = textutil::trim(dateRelease);
-    if (albumName.empty()){
-        return "Ten album khong duoc de trong";
-    }
-    if (!textutil::isSafeText(albumName)){
-        return "Khong duoc dung ky tu '|'";
-    }
-    if (findArtist(idArtist) == nullptr){
-        return "Vui long chon nghe si hop le";
-    }
-    if (!isValidDate(releaseDate)){
-        return "Ngay phat hanh phai co dang yyyy-mm-dd";
-    }
-    // Lấy danh sách ID hiện tại
+    if (!this->auth.isAdmin()) return noPermission();
+    std::string n = textutil::trim(name), d = textutil::trim(dateRelease);
+    if (n.empty()) return "Tên album không được để trống";
+    if (!textutil::isSafeText(n)) return "Không được dùng ký tự '|'";
+    if (this->findArtist(idArtist) == nullptr) return "Vui lòng chọn nghệ sĩ hợp lệ";
+    if (!isValidDate(d)) return "Ngày phát hành phải có dạng yyyy-mm-dd";
     std::vector<std::string> ids;
-    for (Album* album : albums){
-        ids.push_back(album->getIdAlbum());
-    }
-    std::string newId = textutil::nextId(ids, "AL"); // Tạo ID mới
-    // Tạo đối tượng Album
-    Album* newAlbum = new Album(newId, albumName, idArtist, releaseDate);
-    // Thêm vào vector và HashTable
-    albums.push_back(newAlbum);
-    albumById.insert(newId, newAlbum);
-    if (!saveAlbums()){
-        return "Khong ghi duoc file albums.txt";
-    }
+    for (Album* al : this->albums) ids.push_back(al->getIdAlbum());
+    std::string id = textutil::nextId(ids, "AL");
+    Album* album = new Album(id, n, idArtist, d);
+    this->albums.push_back(album);
+    this->albumById.insert(id, album);
+    if (!this->saveAlbums()) return "Không ghi được file albums.txt";
     return "";
 }
 std::string SongService::removeAlbum(const std::string& id){
-    if (!auth.isAdmin()){
-        return noPermission();
+    if (!this->auth.isAdmin()) return noPermission();
+    Album* al = this->findAlbum(id);
+    if (al == nullptr) return "Không tìm thấy album";
+    for (Song* s : this->songs){
+        if (s->getIdAlbum() == id) s->setIdAlbum("");
     }
-    Album* album = findAlbum(id);
-    if (album == nullptr){
-        return "Khong tim thay album";
-    }
-    // Bài hát vẫn được giữ lại nhưng không còn thuộc album
-    for (Song* song : songs){
-        if (song->getIdAlbum() == id){
-            song->setIdAlbum("");
-        }
-    }
-    albums.erase(std::remove(albums.begin(), albums.end(), album), albums.end()); // Xóa album khỏi vector
-    albumById.remove(id); // Xóa album khỏi HashTable
-    delete album; // Giải phóng bộ nhớ
-    // Lưu lại dữ liệu
-    saveSongs();
-    if (!saveAlbums()){
-        return "Khong ghi duoc file albums.txt";
-    }
+    this->albums.erase(std::remove(this->albums.begin(), this->albums.end(), al), this->albums.end());
+    this->albumById.remove(id);
+    delete al;
+    this->saveSongs();
+    if (!this->saveAlbums()) return "Không ghi được file albums.txt";
     return "";
 }
-bool SongService::saveSongs(){
-    return songDao.saveAll(songs);
+
+std::string SongService::setAlbumSongs(const std::string& idAlbum, const std::vector<std::string>& songIds){
+    if (!this->auth.isAdmin()) return noPermission();
+    Album* al = this->findAlbum(idAlbum);
+    if (al == nullptr) return "Không tìm thấy album";
+    std::vector<std::string> chosen;
+    for (const std::string& id : songIds){
+        if (this->findSong(id) != nullptr && std::find(chosen.begin(), chosen.end(), id) == chosen.end()) chosen.push_back(id);
+    }
+    for (Song* s : this->songs){   // bài đang thuộc album mà không được chọn nữa thì gỡ ra
+        if (s->getIdAlbum() == idAlbum && std::find(chosen.begin(), chosen.end(), s->getIdSong()) == chosen.end()) s->setIdAlbum("");
+    }
+    for (const std::string& id : chosen){
+        Song* s = this->findSong(id);
+        if (!s->getIdAlbum().empty() && s->getIdAlbum() != idAlbum){   // đang ở album khác: gỡ khỏi album đó
+            Album* old = this->findAlbum(s->getIdAlbum());
+            if (old != nullptr) old->removeSong(id);
+        }
+        s->setIdAlbum(idAlbum);
+    }
+    std::vector<std::string> existing = al->getSongIds();
+    for (const std::string& id : existing) al->removeSong(id);
+    for (const std::string& id : chosen) al->addSong(id);
+    this->saveAlbums();
+    if (!this->saveSongs()) return "Không ghi được file songs.txt";
+    return "";
 }
-bool SongService::saveArtists(){
-    return artistDao.saveAll(artists);
-}
-bool SongService::saveAlbums(){
-    return albumDao.saveAll(albums);
-}
+
+bool SongService::saveSongs(){ return this->songDao.saveAll(this->songs); }
+bool SongService::saveArtists(){ return this->artistDao.saveAll(this->artists); }
+bool SongService::saveAlbums(){ return this->albumDao.saveAll(this->albums); }
 void SongService::increasePlays(const std::string& idSong){
-    // Tìm bài hát
-    Song* song = findSong(idSong);
-    if (song == nullptr){
-        return;
-    }
-    song->increasePlayCount(); // Tăng số lượt nghe
-    saveSongs(); // Lưu lại dữ liệu
+    Song* s = this->findSong(idSong);
+    if (s == nullptr) return;
+    s->increasePlayCount();
+    this->saveSongs();
 }
-int SongService::songCount() const{
-    return (int)songs.size();
-}
-int SongService::artistCount() const{
-    return (int)artists.size();
-}
-int SongService::albumCount() const{
-    return (int)albums.size();
-}
-// Tính tổng lượt nghe của tất cả bài hát
+int SongService::songCount() const{ return (int)this->songs.size(); }
+int SongService::artistCount() const{ return (int)this->artists.size(); }
+int SongService::albumCount() const{ return (int)this->albums.size(); }
 long long SongService::totalPlays() const{
-    long long total = 0;
-    for (Song* song : songs){
-        total += song->getPlays();
-    }
-    return total;
+    long long sum = 0;
+    for (Song* s : this->songs) sum += s->getPlays();
+    return sum;
 }

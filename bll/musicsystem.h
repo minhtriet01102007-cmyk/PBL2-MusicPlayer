@@ -12,6 +12,9 @@
 #include "libraryservice.h"
 #include "playerservice.h"
 
+// Cổng duy nhất của tầng nghiệp vụ: giao diện chỉ nói chuyện với MusicSystem, không đụng tới service, DAO hay entity.
+// MusicSystem cũng là nơi điều phối các thao tác liên quan nhiều service (ví dụ xóa bài hát phải dọn playlist, hàng đợi...).
+// Quy ước: các hàm trả về std::string là thông báo lỗi, chuỗi rỗng nghĩa là thành công.
 class MusicSystem{
     private:
         AuthService auth;
@@ -25,6 +28,7 @@ class MusicSystem{
         MusicSystem& operator=(const MusicSystem&) = delete;
         void load();
 
+        // --- Tài khoản ---
         AuthService::LoginResult login(const std::string& username, const std::string& password);
         void logout();
         std::string registerListener(const std::string& username, const std::string& email, const std::string& password);
@@ -34,6 +38,7 @@ class MusicSystem{
         std::string currentUsername() const;
         std::string currentEmail() const;
 
+        // --- Khám phá ---
         std::vector<SongInfo> allSongs() const;
         std::vector<ArtistInfo> allArtists() const;
         std::vector<AlbumInfo> allAlbums() const;
@@ -51,6 +56,7 @@ class MusicSystem{
         bool artistInfo(const std::string& idArtist, ArtistInfo& out) const;
         bool albumInfo(const std::string& idAlbum, AlbumInfo& out) const;
 
+        // --- Thư viện cá nhân ---
         bool toggleLike(const std::string& idSong);
         std::vector<SongInfo> likedSongs() const;
         bool toggleFollow(const std::string& idArtist);
@@ -65,6 +71,7 @@ class MusicSystem{
         bool addToPlaylist(const std::string& idPlaylist, const std::string& idSong);
         bool removeFromPlaylist(const std::string& idPlaylist, const std::string& idSong);
 
+        // --- Phát nhạc ---
         bool startQueue(const std::vector<std::string>& ids, const std::string& startId, SongInfo& out);
         bool startPlaylist(const std::string& idPlaylist, const std::string& startId, SongInfo& out);
         bool nextTrack(SongInfo& out);
@@ -80,7 +87,8 @@ class MusicSystem{
         bool addToQueue(const std::string& idSong);
         std::vector<SongInfo> upcoming() const;
 
-        std::string addSong(const std::string& name, const std::string& idArtist,  const std::string& idAlbum, const std::string& type,
+        // --- Quản trị (Admin) ---
+        std::string addSong(const std::string& name, const std::string& idArtist, const std::string& idAlbum, const std::string& type,
                             int durationSec, const std::string& dateRelease, const std::string& sourceFilePath);
         std::string updateSong(const std::string& id, const std::string& name, const std::string& idArtist, const std::string& idAlbum,
                                const std::string& type, int durationSec, const std::string& dateRelease);
@@ -89,253 +97,146 @@ class MusicSystem{
         std::string removeArtist(const std::string& idArtist);
         std::string addAlbum(const std::string& name, const std::string& idArtist, const std::string& dateRelease);
         std::string removeAlbum(const std::string& idAlbum);
+        std::string setAlbumSongs(const std::string& idAlbum, const std::vector<std::string>& songIds);
         std::vector<UserInfo> listUsers() const;
         std::string setUserLocked(const std::string& idUser, bool locked);
         StatsInfo stats() const;
 };
-MusicSystem::MusicSystem(const std::string& root) : auth(root), songSvc(root, auth), playlistSvc(root, auth, songSvc),
-                                                    librarySvc(auth, songSvc), playerSvc(auth, songSvc, playlistSvc){
+
+MusicSystem::MusicSystem(const std::string& root)
+    : auth(root), songSvc(root, auth), playlistSvc(root, auth, songSvc), librarySvc(auth, songSvc), playerSvc(auth, songSvc, playlistSvc){
 }
 void MusicSystem::load(){
-    songSvc.load(); // Nạp dữ liệu bài hát, nghệ sĩ và album
-    auth.load(); // Nạp dữ liệu tài khoản
-    playlistSvc.load(); // Nạp playlist sau khi đã nạp tài khoản
+    this->songSvc.load();
+    this->auth.load();
+    this->playlistSvc.load();   // phải sau auth.load() vì cần gắn playlist vào đúng Listener
 }
+
 AuthService::LoginResult MusicSystem::login(const std::string& username, const std::string& password){
-    AuthService::LoginResult result;
-    result = auth.login(username, password);
-    // Đăng nhập thành công thì làm mới trạng thái phát nhạc
-    if (result == AuthService::LoginOk){
-        playerSvc.reset();
-    }
-    return result;
+    AuthService::LoginResult r = this->auth.login(username, password);
+    if (r == AuthService::LoginOk) this->playerSvc.reset();
+    return r;
 }
 void MusicSystem::logout(){
-    playerSvc.reset(); // Xóa trạng thái phát nhạc
-    auth.logout(); // Đăng xuất tài khoản
+    this->playerSvc.reset();
+    this->auth.logout();
 }
 std::string MusicSystem::registerListener(const std::string& username, const std::string& email, const std::string& password){
-    return auth.registerListener(username, email, password);
+    return this->auth.registerListener(username, email, password);
 }
 std::string MusicSystem::changePassword(const std::string& oldPassword, const std::string& newPassword){
-    return auth.changePassword(oldPassword, newPassword);
+    return this->auth.changePassword(oldPassword, newPassword);
 }
-bool MusicSystem::isLoggedIn() const{
-    return auth.isLoggedIn();
-}
-bool MusicSystem::isAdmin() const{
-    return auth.isAdmin();
-}
-std::string MusicSystem::currentUsername() const{
-    return auth.currentUsername();
-}
-std::string MusicSystem::currentEmail() const{
-    return auth.currentEmail();
-}
-std::vector<SongInfo> MusicSystem::allSongs() const{
-    return songSvc.getAllSongs();
-}
-std::vector<ArtistInfo> MusicSystem::allArtists() const{
-    return songSvc.getAllArtists();
-}
-std::vector<AlbumInfo> MusicSystem::allAlbums() const{
-    return songSvc.getAllAlbums();
-}
-std::vector<SongInfo> MusicSystem::searchSongs(const std::string& keyword) const{
-    return songSvc.searchSongs(keyword);
-}
-std::vector<ArtistInfo> MusicSystem::searchArtists(const std::string& keyword) const{
-    return songSvc.searchArtists(keyword);
-}
-std::vector<AlbumInfo> MusicSystem::searchAlbums(const std::string& keyword) const{
-    return songSvc.searchAlbums(keyword);
-}
-std::vector<SongInfo> MusicSystem::topSongs(int n) const{
-    return songSvc.topSongs(n);
-}
-std::vector<ArtistInfo> MusicSystem::topArtists(int n) const{
-    return songSvc.topArtists(n);
-}
-std::vector<SongInfo> MusicSystem::newestSongs(int n) const{
-    return songSvc.newestSongs(n);
-}
-std::vector<std::string> MusicSystem::genres() const{
-    return songSvc.genres();
-}
-std::vector<SongInfo> MusicSystem::songsByGenre(const std::string& genre) const{
-    return songSvc.songsByGenre(genre);
-}
-std::vector<SongInfo> MusicSystem::songsOfArtist(const std::string& idArtist) const{
-    return songSvc.songsOfArtist(idArtist);
-}
-std::vector<SongInfo> MusicSystem::songsOfAlbum(const std::string& idAlbum) const{
-    return songSvc.songsOfAlbum(idAlbum);
-}
-std::vector<AlbumInfo> MusicSystem::albumsOfArtist(const std::string& idArtist) const{
-    return songSvc.albumsOfArtist(idArtist);
-}
+bool MusicSystem::isLoggedIn() const{ return this->auth.isLoggedIn(); }
+bool MusicSystem::isAdmin() const{ return this->auth.isAdmin(); }
+std::string MusicSystem::currentUsername() const{ return this->auth.currentUsername(); }
+std::string MusicSystem::currentEmail() const{ return this->auth.currentEmail(); }
+
+std::vector<SongInfo> MusicSystem::allSongs() const{ return this->songSvc.getAllSongs(); }
+std::vector<ArtistInfo> MusicSystem::allArtists() const{ return this->songSvc.getAllArtists(); }
+std::vector<AlbumInfo> MusicSystem::allAlbums() const{ return this->songSvc.getAllAlbums(); }
+std::vector<SongInfo> MusicSystem::searchSongs(const std::string& keyword) const{ return this->songSvc.searchSongs(keyword); }
+std::vector<ArtistInfo> MusicSystem::searchArtists(const std::string& keyword) const{ return this->songSvc.searchArtists(keyword); }
+std::vector<AlbumInfo> MusicSystem::searchAlbums(const std::string& keyword) const{ return this->songSvc.searchAlbums(keyword); }
+std::vector<SongInfo> MusicSystem::topSongs(int n) const{ return this->songSvc.topSongs(n); }
+std::vector<ArtistInfo> MusicSystem::topArtists(int n) const{ return this->songSvc.topArtists(n); }
+std::vector<SongInfo> MusicSystem::newestSongs(int n) const{ return this->songSvc.newestSongs(n); }
+std::vector<std::string> MusicSystem::genres() const{ return this->songSvc.genres(); }
+std::vector<SongInfo> MusicSystem::songsByGenre(const std::string& genre) const{ return this->songSvc.songsByGenre(genre); }
+std::vector<SongInfo> MusicSystem::songsOfArtist(const std::string& idArtist) const{ return this->songSvc.songsOfArtist(idArtist); }
+std::vector<SongInfo> MusicSystem::songsOfAlbum(const std::string& idAlbum) const{ return this->songSvc.songsOfAlbum(idAlbum); }
+std::vector<AlbumInfo> MusicSystem::albumsOfArtist(const std::string& idArtist) const{ return this->songSvc.albumsOfArtist(idArtist); }
 bool MusicSystem::artistInfo(const std::string& idArtist, ArtistInfo& out) const{
-    Artist* artist = songSvc.findArtist(idArtist); // Tìm nghệ sĩ theo ID
-    // Không tìm thấy nghệ sĩ
-    if (artist == nullptr){
-        return false;
-    }
-    // Chuyển thông tin Artist thành ArtistInfo
-    out = songSvc.toInfo(*artist);
+    Artist* a = this->songSvc.findArtist(idArtist);
+    if (a == nullptr) return false;
+    out = this->songSvc.toInfo(*a);
     return true;
 }
 bool MusicSystem::albumInfo(const std::string& idAlbum, AlbumInfo& out) const{
-    Album* album = songSvc.findAlbum(idAlbum); // Tìm album theo I
-    // Không tìm thấy album
-    if (album == nullptr){
-        return false;
-    }
-    // Chuyển thông tin Album thành AlbumInfo
-    out = songSvc.toInfo(*album);
+    Album* al = this->songSvc.findAlbum(idAlbum);
+    if (al == nullptr) return false;
+    out = this->songSvc.toInfo(*al);
     return true;
 }
-bool MusicSystem::toggleLike(const std::string& idSong){
-    return librarySvc.toggleLike(idSong);
-}
-std::vector<SongInfo> MusicSystem::likedSongs() const{
-    return librarySvc.likedSongs();
-}
-bool MusicSystem::toggleFollow(const std::string& idArtist){
-    return librarySvc.toggleFollow(idArtist);
-}
-std::vector<ArtistInfo> MusicSystem::followedArtists() const{
-    return librarySvc.followedArtists();
-}
-std::vector<SongInfo> MusicSystem::recentSongs(int n) const{
-    return librarySvc.recentSongs(n);
-}
-std::vector<PlaylistInfo> MusicSystem::myPlaylists() const{
-    return playlistSvc.myPlaylists();
-}
-std::vector<SongInfo> MusicSystem::playlistSongs(const std::string& idPlaylist) const{
-    return playlistSvc.songsOf(idPlaylist);
-}
+
+bool MusicSystem::toggleLike(const std::string& idSong){ return this->librarySvc.toggleLike(idSong); }
+std::vector<SongInfo> MusicSystem::likedSongs() const{ return this->librarySvc.likedSongs(); }
+bool MusicSystem::toggleFollow(const std::string& idArtist){ return this->librarySvc.toggleFollow(idArtist); }
+std::vector<ArtistInfo> MusicSystem::followedArtists() const{ return this->librarySvc.followedArtists(); }
+std::vector<SongInfo> MusicSystem::recentSongs(int n) const{ return this->librarySvc.recentSongs(n); }
+std::vector<PlaylistInfo> MusicSystem::myPlaylists() const{ return this->playlistSvc.myPlaylists(); }
+std::vector<SongInfo> MusicSystem::playlistSongs(const std::string& idPlaylist) const{ return this->playlistSvc.songsOf(idPlaylist); }
 bool MusicSystem::playlistContains(const std::string& idPlaylist, const std::string& idSong) const{
-    return playlistSvc.containsSong(idPlaylist, idSong);
+    return this->playlistSvc.containsSong(idPlaylist, idSong);
 }
-std::string MusicSystem::createPlaylist(const std::string& name){
-    return playlistSvc.create(name);
-}
-bool MusicSystem::renamePlaylist(const std::string& idPlaylist, const std::string& newName){
-    return playlistSvc.rename(idPlaylist, newName);
-}
-bool MusicSystem::deletePlaylist(const std::string& idPlaylist){
-    return playlistSvc.remove(idPlaylist);
-}
-bool MusicSystem::addToPlaylist(const std::string& idPlaylist, const std::string& idSong){
-    return playlistSvc.addSong(idPlaylist, idSong);
-}
-bool MusicSystem::removeFromPlaylist(const std::string& idPlaylist, const std::string& idSong){
-    return playlistSvc.removeSong(idPlaylist, idSong);
-}
+std::string MusicSystem::createPlaylist(const std::string& name){ return this->playlistSvc.create(name); }
+bool MusicSystem::renamePlaylist(const std::string& idPlaylist, const std::string& newName){ return this->playlistSvc.rename(idPlaylist, newName); }
+bool MusicSystem::deletePlaylist(const std::string& idPlaylist){ return this->playlistSvc.remove(idPlaylist); }
+bool MusicSystem::addToPlaylist(const std::string& idPlaylist, const std::string& idSong){ return this->playlistSvc.addSong(idPlaylist, idSong); }
+bool MusicSystem::removeFromPlaylist(const std::string& idPlaylist, const std::string& idSong){ return this->playlistSvc.removeSong(idPlaylist, idSong); }
+
 bool MusicSystem::startQueue(const std::vector<std::string>& ids, const std::string& startId, SongInfo& out){
-    return playerSvc.startQueue(ids, startId, out);
+    return this->playerSvc.startQueue(ids, startId, out);
 }
 bool MusicSystem::startPlaylist(const std::string& idPlaylist, const std::string& startId, SongInfo& out){
-    return playerSvc.startPlaylist(idPlaylist, startId, out);
+    return this->playerSvc.startPlaylist(idPlaylist, startId, out);
 }
-bool MusicSystem::nextTrack(SongInfo& out){
-    return playerSvc.next(out);
-}
-bool MusicSystem::prevTrack(SongInfo& out){
-    return playerSvc.prev(out);
-}
-bool MusicSystem::trackFinished(SongInfo& out){
-    return playerSvc.onTrackFinished(out);
-}
-bool MusicSystem::currentTrack(SongInfo& out) const{
-    return playerSvc.getCurrent(out);
-}
-void MusicSystem::recordPlay(const std::string& idSong){
-    playerSvc.recordPlay(idSong);
-}
-void MusicSystem::setShuffle(bool on){
-    playerSvc.setShuffle(on);
-}
-bool MusicSystem::isShuffle() const{
-    return playerSvc.isShuffle();
-}
-void MusicSystem::setRepeatMode(PlayerService::RepeatMode mode){
-    playerSvc.setRepeatMode(mode);
-}
-PlayerService::RepeatMode MusicSystem::getRepeatMode() const{
-    return playerSvc.getRepeatMode();
-}
-bool MusicSystem::playNext(const std::string& idSong){
-    return playerSvc.playNext(idSong);
-}
-bool MusicSystem::addToQueue(const std::string& idSong){
-    return playerSvc.addToQueue(idSong);
-}
-std::vector<SongInfo> MusicSystem::upcoming() const{
-    return playerSvc.upcoming();
-}
+bool MusicSystem::nextTrack(SongInfo& out){ return this->playerSvc.next(out); }
+bool MusicSystem::prevTrack(SongInfo& out){ return this->playerSvc.prev(out); }
+bool MusicSystem::trackFinished(SongInfo& out){ return this->playerSvc.onTrackFinished(out); }
+bool MusicSystem::currentTrack(SongInfo& out) const{ return this->playerSvc.getCurrent(out); }
+void MusicSystem::recordPlay(const std::string& idSong){ this->playerSvc.recordPlay(idSong); }
+void MusicSystem::setShuffle(bool on){ this->playerSvc.setShuffle(on); }
+bool MusicSystem::isShuffle() const{ return this->playerSvc.isShuffle(); }
+void MusicSystem::setRepeatMode(PlayerService::RepeatMode mode){ this->playerSvc.setRepeatMode(mode); }
+PlayerService::RepeatMode MusicSystem::getRepeatMode() const{ return this->playerSvc.getRepeatMode(); }
+bool MusicSystem::playNext(const std::string& idSong){ return this->playerSvc.playNext(idSong); }
+bool MusicSystem::addToQueue(const std::string& idSong){ return this->playerSvc.addToQueue(idSong); }
+std::vector<SongInfo> MusicSystem::upcoming() const{ return this->playerSvc.upcoming(); }
+
 std::string MusicSystem::addSong(const std::string& name, const std::string& idArtist, const std::string& idAlbum, const std::string& type,
-    int durationSec, const std::string& dateRelease, const std::string& sourceFilePath){
-    return songSvc.addSong(name, idArtist, idAlbum, type, durationSec, dateRelease, sourceFilePath);
+                                 int durationSec, const std::string& dateRelease, const std::string& sourceFilePath){
+    return this->songSvc.addSong(name, idArtist, idAlbum, type, durationSec, dateRelease, sourceFilePath);
 }
 std::string MusicSystem::updateSong(const std::string& id, const std::string& name, const std::string& idArtist, const std::string& idAlbum,
                                     const std::string& type, int durationSec, const std::string& dateRelease){
-    return songSvc.updateSong(id, name, idArtist, idAlbum, type, durationSec, dateRelease);
+    return this->songSvc.updateSong(id, name, idArtist, idAlbum, type, durationSec, dateRelease);
 }
 std::string MusicSystem::removeSong(const std::string& idSong){
-    std::string error = songSvc.removeSong(idSong); // Xóa bài hát trong SongService
-    // Nếu có lỗi thì dừng lại
-    if (!error.empty()){
-        return error;
-    }
-    playerSvc.purgeSong(idSong); // Xóa bài hát khỏi hàng đợi đang phát
-    auth.purgeSong(idSong); // Xóa bài hát khỏi playlist, yêu thích và lịch sử của tất cả Listener
-    // Lưu lại dữ liệu
-    auth.save();
-    playlistSvc.save();
+    std::string err = this->songSvc.removeSong(idSong);
+    if (!err.empty()) return err;
+    this->playerSvc.purgeSong(idSong);   // gỡ khỏi hàng đợi đang phát
+    this->auth.purgeSong(idSong);        // gỡ khỏi playlist, yêu thích, lịch sử của mọi Listener
+    this->auth.save();
+    this->playlistSvc.save();
     return "";
 }
 std::string MusicSystem::addArtist(const std::string& name, const std::string& country){
-    return songSvc.addArtist(name, country);
+    return this->songSvc.addArtist(name, country);
 }
 std::string MusicSystem::removeArtist(const std::string& idArtist){
-    std::string error = songSvc.removeArtist(idArtist); // Xóa nghệ sĩ
-    // Nếu có lỗi thì dừng lại
-    if (!error.empty()){
-        return error;
-    }
-    // Xóa nghệ sĩ khỏi danh sách theo dõi của người dùng
-    auth.purgeArtist(idArtist);
-    // Lưu dữ liệu tài khoản
-    auth.save();
+    std::string err = this->songSvc.removeArtist(idArtist);
+    if (!err.empty()) return err;
+    this->auth.purgeArtist(idArtist);    // gỡ khỏi danh sách theo dõi
+    this->auth.save();
     return "";
 }
 std::string MusicSystem::addAlbum(const std::string& name, const std::string& idArtist, const std::string& dateRelease){
-    return songSvc.addAlbum(name, idArtist, dateRelease);
+    return this->songSvc.addAlbum(name, idArtist, dateRelease);
 }
-std::string MusicSystem::removeAlbum(const std::string& idAlbum){
-    return songSvc.removeAlbum(idAlbum);
+std::string MusicSystem::removeAlbum(const std::string& idAlbum){ return this->songSvc.removeAlbum(idAlbum); }
+std::string MusicSystem::setAlbumSongs(const std::string& idAlbum, const std::vector<std::string>& songIds){
+    return this->songSvc.setAlbumSongs(idAlbum, songIds);
 }
-std::vector<UserInfo> MusicSystem::listUsers() const{
-    return auth.listUsers();
-}
-std::string MusicSystem::setUserLocked(const std::string& idUser, bool locked){
-    return auth.setLocked(idUser, locked);
-}
+std::vector<UserInfo> MusicSystem::listUsers() const{ return this->auth.listUsers(); }
+std::string MusicSystem::setUserLocked(const std::string& idUser, bool locked){ return this->auth.setLocked(idUser, locked); }
 StatsInfo MusicSystem::stats() const{
-    StatsInfo result;
-    // Đếm số lượng bài hát
-    result.songs = songSvc.songCount();
-    // Đếm số lượng nghệ sĩ
-    result.artists = songSvc.artistCount();
-    // Đếm số lượng album
-    result.albums = songSvc.albumCount();
-    // Đếm tổng số tài khoản
-    result.users = auth.userCount();
-    // Đếm số Listener
-    result.listeners = (int)auth.listeners().size();
-    // Lấy tổng lượt nghe
-    result.totalPlays = songSvc.totalPlays();
-    return result;
+    StatsInfo s;
+    s.songs = this->songSvc.songCount();
+    s.artists = this->songSvc.artistCount();
+    s.albums = this->songSvc.albumCount();
+    s.users = this->auth.userCount();
+    s.listeners = (int)this->auth.listeners().size();
+    s.totalPlays = this->songSvc.totalPlays();
+    return s;
 }
