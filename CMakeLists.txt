@@ -3,33 +3,38 @@ project(PBL2 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_AUTOMOC ON)
+
+# Tầng UI không dùng Q_OBJECT / signals / slots (thay bằng std::function) nên KHÔNG cần moc.
+# Nhờ vậy mọi header (src, dsa, dal, bll, ui) chỉ được biên dịch trong đúng một file: main.cpp,
+# và việc định nghĩa hàm ngay trong .h (không inline) không gây lỗi "multiple definition".
+# Nếu sau này bạn thêm Q_OBJECT: bật AUTOMOC và tách lớp đó ra cặp .h/.cpp riêng.
+set(CMAKE_AUTOMOC OFF)
 
 find_package(Qt6 REQUIRED COMPONENTS Widgets Multimedia)
 
-# ${CMAKE_SOURCE_DIR}      : de include duoc "src/...", "dsa/...", "dal/...", "bll/..."
-# ${CMAKE_SOURCE_DIR}/src  : song.h, user.h, admin.h, listener.h, playlist.h ...
-include_directories(
-    ${CMAKE_SOURCE_DIR}
-    ${CMAKE_SOURCE_DIR}/src
-    ${CMAKE_SOURCE_DIR}/dsa
-    ${CMAKE_SOURCE_DIR}/bll
-    ${CMAKE_SOURCE_DIR}/dal
-    ${CMAKE_SOURCE_DIR}/ui
-)
+# ${CMAKE_SOURCE_DIR} để include được "src/...", "dsa/...", "dal/...", "bll/...", "ui/..."
+include_directories(${CMAKE_SOURCE_DIR})
 
-# Chi con header (de AUTOMOC xu ly Q_OBJECT va Qt Creator hien file trong cay du an)
-file(GLOB UI_SRC  ui/*.h)
-file(GLOB BLL_SRC bll/*.h)
-file(GLOB DAL_SRC dal/*.h)
+# Chỉ liệt kê header để Qt Creator hiện file trong cây dự án (không biên dịch riêng từng file)
+file(GLOB SRC_HDR src/*.h)
+file(GLOB DSA_HDR dsa/*/*.h)
+file(GLOB DAL_HDR dal/*.h)
+file(GLOB BLL_HDR bll/*.h)
+file(GLOB UI_HDR  ui/*.h)
 
-qt_add_executable(PBL2 main.cpp ${UI_SRC} ${BLL_SRC} ${DAL_SRC})
+qt_add_executable(PBL2 main.cpp ${SRC_HDR} ${DSA_HDR} ${DAL_HDR} ${BLL_HDR} ${UI_HDR})
 target_link_libraries(PBL2 PRIVATE Qt6::Widgets Qt6::Multimedia)
 
-# Header entity cua ban chua co "inline" -> cho phep trung dinh nghia khi lien ket (MinGW/GCC)
-if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-    target_link_options(PBL2 PRIVATE -Wl,--allow-multiple-definition)
+# Thư mục gốc dự án (chứa data/ và assets/music/), tránh lỗi không tìm thấy file khi chạy từ thư mục build
+target_compile_definitions(PBL2 PRIVATE PROJECT_DIR="${CMAKE_SOURCE_DIR}")
+
+# Ẩn cửa sổ console trên Windows (bật bằng: cmake -DPBL2_HIDE_CONSOLE=ON ...)
+option(PBL2_HIDE_CONSOLE "Ẩn cửa sổ console trên Windows" OFF)
+if(PBL2_HIDE_CONSOLE)
+    set_target_properties(PBL2 PROPERTIES WIN32_EXECUTABLE ON MACOSX_BUNDLE ON)
 endif()
 
-# Thu muc goc du an (chua data/ va assets/music/) -> tranh loi khong tim thay file khi chay tu thu muc build
-target_compile_definitions(PBL2 PRIVATE PROJECT_DIR="${CMAKE_SOURCE_DIR}")
+# Mã nguồn có tiếng Việt có dấu (UTF-8)
+if(MSVC)
+    target_compile_options(PBL2 PRIVATE /utf-8 /permissive-)
+endif()
