@@ -91,6 +91,58 @@ char detectFileDelim(const std::string& path){
     auto lines = readLines(path);
     return lines.empty() ? '|' : detectDelim(lines[0]);
 }
+// Khóa so khớp tên: bỏ dấu tiếng Việt, bỏ khoảng trắng và dấu câu, chuyển chữ thường.
+// "Sơn Tùng M-TP" -> "sontungmtp"; "Tinh Hà “Say Hi”" và "Tinh Hà \"Say Hi\"" cho cùng một khóa.
+std::string foldKey(const std::string& s){
+    struct Group{ const char32_t* chars; char out; };
+    static const Group groups[] = {
+        {U"àáảãạăằắẳẵặâầấẩẫậÀÁẢÃẠĂẰẮẲẴẶÂẦẤẨẪẬ", 'a'},
+        {U"èéẻẽẹêềếểễệÈÉẺẼẸÊỀẾỂỄỆ", 'e'},
+        {U"ìíỉĩịÌÍỈĨỊ", 'i'},
+        {U"òóỏõọôồốổỗộơờớởỡợÒÓỎÕỌÔỒỐỔỖỘƠỜỚỞỠỢ", 'o'},
+        {U"ùúủũụưừứửữựÙÚỦŨỤƯỪỨỬỮỰ", 'u'},
+        {U"ỳýỷỹỵỲÝỶỸỴ", 'y'},
+        {U"đĐ", 'd'}
+    };
+    std::string out;
+    size_t i = 0;
+    while (i < s.size()){
+        unsigned char c = (unsigned char)s[i];
+        char32_t cp = 0;
+        size_t len = 1;
+        if (c < 0x80){ cp = c; len = 1; }
+        else if ((c >> 5) == 0x6){ cp = c & 0x1F; len = 2; }
+        else if ((c >> 4) == 0xE){ cp = c & 0x0F; len = 3; }
+        else if ((c >> 3) == 0x1E){ cp = c & 0x07; len = 4; }
+        else{ ++i; continue; }
+        if (i + len > s.size()) len = s.size() - i;
+        for (size_t k = 1; k < len; ++k) cp = (cp << 6) | ((unsigned char)s[i + k] & 0x3F);
+        size_t start = i;
+        i += len;
+        if (cp < 0x80){
+            if (std::isalnum((int)cp)) out += (char)std::tolower((int)cp);
+            continue;
+        }
+        if ((cp >= 0x300 && cp <= 0x36F) || (cp >= 0x2000 && cp <= 0x206F) || (cp >= 0xA0 && cp <= 0xBF) || (cp >= 0x3000 && cp <= 0x303F)) continue;
+        bool mapped = false;
+        for (const Group& g : groups){
+            for (const char32_t* p = g.chars; *p != 0; ++p){
+                if (*p == cp){
+                    out += g.out;
+                    mapped = true;
+                    break;
+                }
+            }
+            if (mapped) break;
+        }
+        if (!mapped) out.append(s, start, len);   // chữ cái khác (Hàn, Nhật, Latin khác...) giữ nguyên
+    }
+    return out;
+}
+// Văn bản an toàn để ghi vào file: không chứa '|' (dấu phân cách cột) và không xuống dòng
+bool isSafeText(const std::string& s){
+    return s.find('|') == std::string::npos && s.find('\n') == std::string::npos && s.find('\r') == std::string::npos;
+}
 // Sinh id kế tiếp theo đúng dạng id đang có (S15 -> S16, PL001 -> PL002)
 std::string nextId(const std::vector<std::string>& ids, const std::string& defPrefix){
     std::string prefix = defPrefix; // Phần tiền tố của ID
@@ -112,8 +164,5 @@ std::string nextId(const std::vector<std::string>& ids, const std::string& defPr
     std::string num = std::to_string(mx + 1);
     if (num.size() < width) num = std::string(width - num.size(), '0') + num;
     return prefix + num;
-}
-bool isSafeText(const std::string& text){
-        return text.find('|') == std::string::npos;
 }
 }
