@@ -113,4 +113,7 @@ std::string nextId(const std::vector<std::string>& ids, const std::string& defPr
     if (num.size() < width) num = std::string(width - num.size(), '0') + num;
     return prefix + num;
 }
+bool isSafeText(const std::string& text){
+        return text.find('|') == std::string::npos;
+}
 }

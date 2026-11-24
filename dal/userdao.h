@@ -11,85 +11,106 @@ class UserDAO{
     private:
         std::string adminPath;
         std::string listenerPath;
+
     public:
         explicit UserDAO(const std::string& root);
-        std::vector<User*> loadAll() const; // Đọc danh sách Admin và Listener
-        bool saveAll(const std::vector<User*>& users) const; // Ghi danh sách tài khoản vào hai file
+        std::vector<User*> loadAll() const;
+        bool saveAll(const std::vector<User*>& users) const;
 };
-std::vector<User*> UserDAO::loadAll() const {
-    std::vector<User*> danhSachUser;
-    std::vector<std::string> danhSachDongAdmin = textutil::readLines(adminPath);
-    for (const std::string& dong : danhSachDongAdmin){
-        // Xác định dấu phân cách của dòng
-        char dauPhanCach = textutil::detectDelim(dong);
-        // Tách dòng thành các cột
-        std::vector<std::string> cot = textutil::split(dong, dauPhanCach);
-        if (cot.size() < 4){ // Admin cần tối thiểu 4 cột
-            continue;
-        }
-        // Tạo đối tượng Admin từ dữ liệu trong file
-        Admin* admin = new Admin(
-            cot[0],     // ID
-            cot[1],     // Username
-            cot[2],     // Email
-            cot[3]      // Password
-        );
-        // Thêm Admin vào danh sách chung
-        danhSachUser.push_back(admin);
+UserDAO::UserDAO(const std::string& root){
+    adminPath = root + "/data/admin.txt";
+    listenerPath = root + "/data/listener.txt";
+}
+
+// Đọc dữ liệu người dùng
+std::vector<User*> UserDAO::loadAll() const{
+    std::vector<User*> users;
+
+    // Đọc Admin
+    for (const std::string& line : textutil::readLines(adminPath)){
+        std::vector<std::string> p = textutil::split(line, textutil::detectDelim(line));
+        if (p.size() < 4) continue;
+
+        users.push_back(new Admin(p[0], p[1], p[2], p[3]));
     }
-    std::vector<std::string> danhSachDongListener = textutil::readLines(listenerPath);
-    for (const std::string& dong : danhSachDongListener){
-        // Xác định dấu phân cách
-        char dauPhanCach = textutil::detectDelim(dong);
-        // Tách dòng thành các cột
-        std::vector<std::string> cot = textutil::split(dong, dauPhanCach);
-        if (cot.size() < 4){ // Listener cần tối thiểu 4 cột
-            continue;
+
+    // Đọc Listener
+    for (const std::string& line : textutil::readLines(listenerPath)){
+        std::vector<std::string> p = textutil::split(line, textutil::detectDelim(line));
+        if (p.size() < 4) continue;
+
+        Listener* l = new Listener(p[0], p[1], p[2], p[3]);
+
+        if (p.size() > 4) l->setTotalSongsPlayed(textutil::toInt(p[4]));
+        if (p.size() > 5) l->setActive(p[5] != "0");
+
+        if (p.size() > 6){
+            for (const std::string& id : textutil::split(p[6], textutil::listDelim(textutil::detectDelim(line))))
+                l->likeSong(id);
         }
-        // Tạo đối tượng Listener
-        Listener* listener = new Listener(
-            cot[0],     // ID
-            cot[1],     // Username
-            cot[2],     // Email
-            cot[3]      // Password
-        );
-        // Nếu có cột thứ 5 thì đọc tổng số bài hát đã nghe
-        if (cot.size() > 4){
-            int tongSoBaiHatDaNghe = textutil::toInt(cot[4]);
-            listener->setTotalSongsPlayed(tongSoBaiHatDaNghe);
+
+        if (p.size() > 7){
+            for (const std::string& id : textutil::split(p[7], textutil::listDelim(textutil::detectDelim(line))))
+                l->followArtist(id);
         }
-        // Nếu có cột thứ 6 thì đọc trạng thái tài khoản
-        if (cot.size() > 5){
-            bool dangHoatDong = (cot[5] != "0");
-            listener->setActive(dangHoatDong);
+
+        if (p.size() > 8){
+            for (const std::string& id : textutil::split(p[8], textutil::listDelim(textutil::detectDelim(line))))
+                l->addRecentSong(id);
         }
-        // Nếu có cột thứ 7 thì đọc danh sách bài hát yêu thích
-        if (cot.size() > 6){
-            char dauPhanCachDanhSach = textutil::listDelim(dauPhanCach);
-            std::vector<std::string> danhSachIdBaiHat = textutil::split(cot[6], dauPhanCachDanhSach);
-            for (const std::string& idBaiHat : danhSachIdBaiHat){
-                listener->likeSong(idBaiHat);
-            }
-        }
-        // Nếu có cột thứ 8 thì đọc danh sách nghệ sĩ đang theo dõi
-        if (cot.size() > 7){
-            char dauPhanCachDanhSach = textutil::listDelim(dauPhanCach);
-            std::vector<std::string> danhSachIdArtist = textutil::split(cot[7], dauPhanCachDanhSach);
-            for (const std::string& idArtist : danhSachIdArtist){
-                listener->followArtist(idArtist);
-            }
-        }
-        // Nếu có cột thứ 9 thì đọc lịch sử nghe nhạc
-        if (cot.size() > 8){
-            char dauPhanCachDanhSach = textutil::listDelim(dauPhanCach);
-            std::vector<std::string> lichSuNgheNhac = textutil::split(cot[8], dauPhanCachDanhSach);
-            // Thêm lần lượt từ bài cũ đến bài mới
-            for (const std::string& idBaiHat : lichSuNgheNhac){
-                listener->addRecentSong(idBaiHat);
-            }
-        }
-        // Thêm Listener vào danh sách chung
-        danhSachUser.push_back(listener);
+
+        users.push_back(l);
     }
-    return danhSachUser;
+
+    return users;
+}
+
+// Lưu dữ liệu người dùng
+bool UserDAO::saveAll(const std::vector<User*>& users) const{
+    std::ofstream adminFile(adminPath);
+    std::ofstream listenerFile(listenerPath);
+
+    if (!adminFile || !listenerFile) return false;
+
+    for (User* u : users){
+        if (u == nullptr) continue;
+
+        if (u->isAdmin()){
+            adminFile << u->getIdUser() << " | "
+                      << u->getUsername() << " | "
+                      << u->getEmail() << " | "
+                      << u->getPassword() << '\n';
+        }
+        else{
+            Listener* l = static_cast<Listener*>(u);
+
+            listenerFile << l->getIdUser() << " | "
+                         << l->getUsername() << " | "
+                         << l->getEmail() << " | "
+                         << l->getPassword() << " | "
+                         << l->getTotalSongsPlayed() << " | "
+                         << l->isActive() << " | ";
+
+            const std::vector<std::string>& liked = l->getLikedSongIds();
+            const std::vector<std::string>& followed = l->getFollowedArtistIds();
+            const std::vector<std::string>& recent = l->getRecentSongIds();
+
+            for (size_t i = 0; i < liked.size(); i++)
+                listenerFile << (i > 0 ? ";" : "") << liked[i];
+
+            listenerFile << " | ";
+
+            for (size_t i = 0; i < followed.size(); i++)
+                listenerFile << (i > 0 ? ";" : "") << followed[i];
+
+            listenerFile << " | ";
+
+            for (size_t i = 0; i < recent.size(); i++)
+                listenerFile << (i > 0 ? ";" : "") << recent[i];
+
+            listenerFile << '\n';
+        }
+    }
+
+    return adminFile.good() && listenerFile.good();
 }
