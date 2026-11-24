@@ -496,7 +496,7 @@ std::vector<AlbumInfo> SongService::albumsOfArtist(const std::string& idArtist) 
         if (album->getIdArtist() == idArtist){
             selectedAlbums.push_back(album);
         }
-    
+    }
     // Sắp xếp album mới nhất lên trước
     std::sort(selectedAlbums.begin(), selectedAlbums.end(), [](Album* a, Album* b){
             return a->getDateRelease() > b->getDateRelease();
